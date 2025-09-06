@@ -9,8 +9,8 @@ A backend system that collects conversation summaries from ElevenLabs Voice Agen
 - 🔍 **Topic Extraction**: Identify key themes and topics from user feedback
 - 📈 **Trend Analysis**: Track sentiment and feedback trends over time
 - 🚀 **RESTful API**: Clean API endpoints for data access and visualization
-- 🔐 **Secure**: JWT-based authentication and authorization
-- ⚡ **Async Processing**: Background task processing with Celery and Redis
+- 🔄 **Webhook Support**: Real-time conversation processing via webhooks
+- ⚡ **Public APIs**: No authentication required for easy demo access
 
 ## Quick Start
 
@@ -25,14 +25,9 @@ A backend system that collects conversation summaries from ElevenLabs Voice Agen
    # Edit .env with your API keys and database configuration
    ```
 
-3. **Run Database Migrations**
+3. **Start the Server**
    ```bash
-   alembic upgrade head
-   ```
-
-4. **Start the Server**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   uvicorn start:app --host 0.0.0.0 --port 8000
    ```
 
 ## API Documentation
@@ -42,10 +37,8 @@ Once running, visit `http://localhost:8000/docs` for interactive API documentati
 ## Environment Variables
 
 - `ELEVENLABS_API_KEY`: Your ElevenLabs API key
-- `DATABASE_URL`: PostgreSQL connection string
-- `OPENAI_API_KEY`: OpenAI API key for enhanced NLP processing
-- `REDIS_URL`: Redis connection for background tasks
-- `JWT_SECRET_KEY`: Secret key for JWT token generation
+- `DATABASE_URL`: PostgreSQL connection string (SQLite used locally)
+- `OPENAI_API_KEY`: OpenAI API key for enhanced NLP processing (optional)
 
 ## Architecture
 
@@ -61,6 +54,10 @@ Once running, visit `http://localhost:8000/docs` for interactive API documentati
 ├── tests/            # Test suite
 └── alembic/          # Database migration files
 ```
+
+## Deployment
+
+Ready for deployment on Railway, Replit, or similar platforms with included configuration files.
 
 ## Contributing
 
