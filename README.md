@@ -5,13 +5,19 @@ Analyze sentiment and extract insights from ElevenLabs voice agent conversations
 ## 🚀 Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Install Ollama (Required)
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# 2. Pull the required model
+ollama pull qwen2:7b
+
+# 3. Install Python dependencies
 pip install -r requirements.txt
 
-# 2. Start server
+# 4. Start server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# 3. Open API docs
+# 5. Open API docs
 open http://localhost:8000/docs
 ```
 
@@ -38,8 +44,8 @@ curl http://localhost:8000/agent/YOUR_AGENT_ID/overview
 - **Agent-Specific Analysis**: Pass any ElevenLabs voice agent ID
 - **Key Insights**: Automatically extracts what customers love vs areas for improvement
 - **Real ElevenLabs API**: Connects to live data (with mock fallback)
-- **Ollama Integration**: Uses local LLM (qwen2:7b) when available
-- **Rule-based Fallback**: Works without Ollama
+- **Ollama Integration**: Uses local LLM (qwen2:7b) for high-quality analysis
+- **Rule-based Fallback**: Automatic fallback if Ollama is unavailable
 - **No Database**: Simple setup, no external dependencies
 
 ## 🎮 Service Management
@@ -125,17 +131,24 @@ curl -X POST http://localhost:8000/analyze \
 curl http://localhost:8000/agent/my-agent-123/conversations
 ```
 
-## ⚙️ Optional: Ollama Setup
+## ⚙️ Prerequisites
 
-For better analysis, install Ollama:
+### Required: Ollama Setup
+
+Ollama is required for high-quality sentiment analysis:
 
 ```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Pull model
+# Pull the required model
 ollama pull qwen2:7b
+
+# Verify installation
+ollama list
 ```
+
+**Note**: The system will automatically fall back to rule-based analysis if Ollama is unavailable, but Ollama provides significantly better results.
 
 ## 📁 Project Structure
 
