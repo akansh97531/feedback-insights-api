@@ -22,13 +22,13 @@ class ElevenLabsClient:
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                # Try to fetch real conversations from ElevenLabs API
+                # First, get conversation IDs for the agent
                 response = await client.get(
                     f"{self.base_url}/convai/conversations",
                     headers=self.headers,
                     params={
                         "agent_id": agent_id,
-                        "limit": limit
+                        "page_size": limit
                     }
                 )
                 
@@ -36,38 +36,69 @@ class ElevenLabsClient:
                     data = response.json()
                     conversations = []
                     
-                    for conv in data.get("conversations", []):
-                        # Extract transcript from conversation
-                        transcript = self._extract_transcript(conv)
-                        if transcript:
-                            conversations.append({
-                                "id": conv.get("conversation_id", "unknown"),
-                                "agent_id": agent_id,
-                                "transcript": transcript,
-                                "created_at": conv.get("created_at", ""),
-                                "duration": conv.get("duration_seconds", 0)
-                            })
+                    # Get conversation IDs from the response
+                    conversation_ids = []
+                    if "history" in data:
+                        for item in data["history"]:
+                            if "conversation_id" in item:
+                                conversation_ids.append(item["conversation_id"])
                     
-                    return conversations
+                    # Fetch detailed conversation data for each ID
+                    for conv_id in conversation_ids[:limit]:
+                        try:
+                            conv_response = await client.get(
+                                f"{self.base_url}/convai/conversations/{conv_id}",
+                                headers=self.headers
+                            )
+                            
+                            if conv_response.status_code == 200:
+                                conv_data = conv_response.json()
+                                transcript = self._extract_transcript_from_conversation(conv_data)
+                                
+                                if transcript:
+                                    conversations.append({
+                                        "id": conv_id,
+                                        "agent_id": agent_id,
+                                        "transcript": transcript,
+                                        "created_at": conv_data.get("created_at", ""),
+                                        "duration": conv_data.get("duration_seconds", 0)
+                                    })
+                        except Exception as e:
+                            print(f"Error fetching conversation {conv_id}: {e}")
+                            continue
+                    
+                    return conversations if conversations else self._get_mock_conversations(agent_id, limit)
                 else:
-                    print(f"ElevenLabs API error: {response.status_code}")
+                    print(f"ElevenLabs API error: {response.status_code} - {response.text}")
                     return self._get_mock_conversations(agent_id, limit)
                     
         except Exception as e:
             print(f"Error fetching from ElevenLabs: {e}")
             return self._get_mock_conversations(agent_id, limit)
     
-    def _extract_transcript(self, conversation: Dict[str, Any]) -> str:
-        """Extract transcript text from conversation data."""
-        # Try different possible transcript fields
+    def _extract_transcript_from_conversation(self, conversation: Dict[str, Any]) -> str:
+        """Extract transcript text from detailed conversation data."""
+        # Try different possible transcript fields from ElevenLabs API
         if "transcript" in conversation:
             return conversation["transcript"]
+        
+        # Check for conversation turns/messages
+        if "conversation_turns" in conversation:
+            messages = []
+            for turn in conversation["conversation_turns"]:
+                if "user_message" in turn and turn["user_message"]:
+                    messages.append(f"User: {turn['user_message']}")
+                if "agent_response" in turn and turn["agent_response"]:
+                    messages.append(f"Agent: {turn['agent_response']}")
+            return " ".join(messages)
         
         if "messages" in conversation:
             messages = []
             for msg in conversation["messages"]:
-                if isinstance(msg, dict) and "content" in msg:
-                    messages.append(msg["content"])
+                if isinstance(msg, dict):
+                    content = msg.get("content", "") or msg.get("text", "")
+                    if content:
+                        messages.append(content)
                 elif isinstance(msg, str):
                     messages.append(msg)
             return " ".join(messages)

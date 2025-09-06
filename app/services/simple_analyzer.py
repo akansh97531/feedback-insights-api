@@ -78,11 +78,11 @@ class SimpleAnalyzer:
                 result = response.json().get("response", "").strip().lower()
                 
                 if "positive" in result:
-                    return {"sentiment_label": "positive", "sentiment_score": 0.7, "confidence": 0.8, "reasoning": "Ollama analysis"}
+                    return {"sentiment_label": "positive", "sentiment_score": 0.7, "confidence": 0.8}
                 elif "negative" in result:
-                    return {"sentiment_label": "negative", "sentiment_score": -0.7, "confidence": 0.8, "reasoning": "Ollama analysis"}
+                    return {"sentiment_label": "negative", "sentiment_score": -0.7, "confidence": 0.8}
                 else:
-                    return {"sentiment_label": "neutral", "sentiment_score": 0.0, "confidence": 0.6, "reasoning": "Ollama analysis"}
+                    return {"sentiment_label": "neutral", "sentiment_score": 0.0, "confidence": 0.6}
             
             return self._rule_analysis(text)
     
@@ -93,19 +93,22 @@ class SimpleAnalyzer:
         positive_count = sum(1 for word in words if word in self.positive_words)
         negative_count = sum(1 for word in words if word in self.negative_words)
         
+        sentiment_score = 0.6 if positive_count > negative_count else -0.6
+        sentiment_label = "positive" if positive_count > negative_count else "negative"
+        confidence = 0.7
+        emotions = ["happy", "sad", "angry"]
+        
         if positive_count > negative_count:
             return {
                 "sentiment_label": "positive",
                 "sentiment_score": 0.6,
-                "confidence": 0.7,
-                "reasoning": f"Found {positive_count} positive words"
+                "confidence": 0.7
             }
         elif negative_count > positive_count:
             return {
                 "sentiment_label": "negative", 
                 "sentiment_score": -0.6,
-                "confidence": 0.7,
-                "reasoning": f"Found {negative_count} negative words"
+                "confidence": 0.7
             }
         else:
             return self._neutral_response("No clear sentiment detected")
@@ -115,8 +118,7 @@ class SimpleAnalyzer:
         return {
             "sentiment_label": "neutral",
             "sentiment_score": 0.0,
-            "confidence": 0.5,
-            "reasoning": reason
+            "confidence": 0.5
         }
     
     async def extract_topics(self, text: str, max_topics: int = 5) -> List[Dict[str, Any]]:

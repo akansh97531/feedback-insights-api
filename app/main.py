@@ -73,11 +73,7 @@ async def agent_sentiment_overview(agent_id: str):
         elif sentiment["sentiment_label"] == "negative" and sentiment["confidence"] > 0.6:
             negative_themes.extend(_extract_themes(conv["transcript"], "negative"))
         
-        results.append({
-            "conversation_id": conv["id"],
-            "sentiment": sentiment,
-            "duration": conv.get("duration", 0)
-        })
+        # Don't store individual conversations in overview
     
     # Calculate averages and percentages
     total_conversations = len(convs)
@@ -107,8 +103,7 @@ async def agent_sentiment_overview(agent_id: str):
         "key_insights": {
             "what_customers_love": good_insights,
             "areas_for_improvement": improvement_areas
-        },
-        "conversations": results
+        }
     }
 
 def _extract_themes(text: str, sentiment_type: str) -> list:
