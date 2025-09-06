@@ -5,6 +5,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Any, List
 import logging
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from app.services.simple_analyzer import SimpleAnalyzer
 from app.services.elevenlabs import ElevenLabsClient
