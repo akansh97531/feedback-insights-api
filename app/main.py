@@ -113,6 +113,8 @@ async def agent_sentiment_overview(agent_id: str):
 
 def _extract_themes(text: str, sentiment_type: str) -> list:
     """Extract key themes from conversation text."""
+    if not text or not isinstance(text, str):
+        return []
     text_lower = text.lower()
     
     if sentiment_type == "positive":

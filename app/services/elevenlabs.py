@@ -35,12 +35,26 @@ class ElevenLabsClient:
                     data = response.json()
                     conversations = []
                     
-                    # Get conversation IDs from the response
+                    # Get conversation IDs from the response - check multiple possible structures
                     conversation_ids = []
+                    
+                    # Try different possible response structures
                     if "history" in data:
                         for item in data["history"]:
                             if "conversation_id" in item:
                                 conversation_ids.append(item["conversation_id"])
+                    elif "conversations" in data:
+                        for item in data["conversations"]:
+                            if "conversation_id" in item:
+                                conversation_ids.append(item["conversation_id"])
+                            elif "id" in item:
+                                conversation_ids.append(item["id"])
+                    elif isinstance(data, list):
+                        for item in data:
+                            if "conversation_id" in item:
+                                conversation_ids.append(item["conversation_id"])
+                            elif "id" in item:
+                                conversation_ids.append(item["id"])
                     
                     # Fetch detailed conversation data for each ID
                     for conv_id in conversation_ids[:limit]:
@@ -75,11 +89,25 @@ class ElevenLabsClient:
     
     def _extract_transcript_from_conversation(self, conversation: Dict[str, Any]) -> str:
         """Extract transcript text from detailed conversation data."""
-        # Try different possible transcript fields from ElevenLabs API
+        # Handle ElevenLabs API format: transcript is array of message objects
         if "transcript" in conversation:
-            return conversation["transcript"]
+            transcript_data = conversation["transcript"]
+            
+            # If transcript is already a string, return it
+            if isinstance(transcript_data, str):
+                return transcript_data
+            
+            # If transcript is an array of message objects (ElevenLabs format)
+            if isinstance(transcript_data, list):
+                messages = []
+                for msg in transcript_data:
+                    if isinstance(msg, dict) and "message" in msg:
+                        role = msg.get("role", "unknown")
+                        message = msg["message"]
+                        messages.append(f"{role.title()}: {message}")
+                return " ".join(messages)
         
-        # Check for conversation turns/messages
+        # Check for conversation turns/messages (fallback formats)
         if "conversation_turns" in conversation:
             messages = []
             for turn in conversation["conversation_turns"]:
