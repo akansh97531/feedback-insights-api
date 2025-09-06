@@ -94,7 +94,7 @@ python fetch_and_analyze.py
 curl http://localhost:8000/agent/my-agent-123/overview
 ```
 
-**Response:**
+**Overview Response:**
 ```json
 {
   "agent_id": "my-agent-123",
@@ -120,6 +120,43 @@ curl http://localhost:8000/agent/my-agent-123/overview
 }
 ```
 
+### Get Individual Conversations
+```bash
+# Get detailed conversations with sentiment analysis
+curl http://localhost:8000/agent/my-agent-123/conversations
+```
+
+**Conversations Response:**
+```json
+{
+  "agent_id": "my-agent-123",
+  "conversations": [
+    {
+      "id": "conv_abc123_real_elevenlabs_id",
+      "transcript": "Hi, I'm calling about your product. The service has been absolutely amazing! Your team was so helpful...",
+      "sentiment": {
+        "sentiment_label": "positive",
+        "sentiment_score": 0.7,
+        "confidence": 0.8
+      },
+      "created_at": "2024-01-01T10:00:00Z",
+      "duration": 180
+    },
+    {
+      "id": "conv_def456_real_elevenlabs_id",
+      "transcript": "This is terrible. I've been waiting for hours and nobody can help me. The product doesn't work...",
+      "sentiment": {
+        "sentiment_label": "negative",
+        "sentiment_score": -0.7,
+        "confidence": 0.8
+      },
+      "created_at": "2024-01-01T11:30:00Z",
+      "duration": 240
+    }
+  ]
+}
+```
+
 ### Other Examples
 ```bash
 # Analyze custom text
@@ -127,8 +164,12 @@ curl -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
   -d '{"text": "Great service!"}'
 
-# Get individual conversations
-curl http://localhost:8000/agent/my-agent-123/conversations
+# Response:
+# {
+#   "sentiment_label": "positive",
+#   "sentiment_score": 0.7,
+#   "confidence": 0.8
+# }
 ```
 
 ## ⚙️ Prerequisites
