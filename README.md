@@ -1,68 +1,150 @@
-# Feedback Insights Backend
+# ElevenLabs Voice Agent Sentiment Analysis
 
-A backend system that collects conversation summaries from ElevenLabs Voice Agent APIs and generates actionable insights for product owners to understand how their features and products are performing.
+Analyze sentiment and extract insights from ElevenLabs voice agent conversations using Ollama or rule-based fallback.
 
-## Features
+## 🚀 Quick Start
 
-- 🎙️ **ElevenLabs Integration**: Automatically fetch conversation data from ElevenLabs Voice Agent APIs
-- 📊 **Intelligent Analysis**: Generate insights using NLP and sentiment analysis
-- 🔍 **Topic Extraction**: Identify key themes and topics from user feedback
-- 📈 **Trend Analysis**: Track sentiment and feedback trends over time
-- 🚀 **RESTful API**: Clean API endpoints for data access and visualization
-- 🔄 **Webhook Support**: Real-time conversation processing via webhooks
-- ⚡ **Public APIs**: No authentication required for easy demo access
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
 
-## Quick Start
+# 2. Start server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-1. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Set Up Environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys and database configuration
-   ```
-
-3. **Start the Server**
-   ```bash
-   uvicorn start:app --host 0.0.0.0 --port 8000
-   ```
-
-## API Documentation
-
-Once running, visit `http://localhost:8000/docs` for interactive API documentation.
-
-## Environment Variables
-
-- `ELEVENLABS_API_KEY`: Your ElevenLabs API key
-- `DATABASE_URL`: PostgreSQL connection string (SQLite used locally)
-- `OPENAI_API_KEY`: OpenAI API key for enhanced NLP processing (optional)
-
-## Architecture
-
-```
-├── app/
-│   ├── api/          # API routes and endpoints
-│   ├── core/         # Core configuration and settings
-│   ├── db/           # Database connection and session management
-│   ├── models/       # SQLAlchemy database models
-│   ├── schemas/      # Pydantic schemas for request/response validation
-│   ├── services/     # Business logic and external API integrations
-│   └── utils/        # Utility functions and helpers
-├── tests/            # Test suite
-└── alembic/          # Database migration files
+# 3. Open API docs
+open http://localhost:8000/docs
 ```
 
-## Deployment
+## 🎯 Main Feature
 
-Ready for deployment on Railway, Replit, or similar platforms with included configuration files.
+**Get comprehensive sentiment analysis for any ElevenLabs voice agent:**
 
-## Contributing
+```bash
+curl http://localhost:8000/agent/YOUR_AGENT_ID/overview
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+## 📊 API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /` | API info |
+| `GET /health` | Health check |
+| `GET /agent/{agent_id}/overview` | **Complete sentiment overview with insights** |
+| `GET /agent/{agent_id}/conversations` | Individual conversations with sentiment |
+| `POST /analyze` | Analyze custom text sentiment |
+
+## 🔧 Features
+
+- **Agent-Specific Analysis**: Pass any ElevenLabs voice agent ID
+- **Key Insights**: Automatically extracts what customers love vs areas for improvement
+- **Real ElevenLabs API**: Connects to live data (with mock fallback)
+- **Ollama Integration**: Uses local LLM (qwen2:7b) when available
+- **Rule-based Fallback**: Works without Ollama
+- **No Database**: Simple setup, no external dependencies
+
+## 🎮 Service Management
+
+### Start Service
+```bash
+# Development mode (auto-reload)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Production mode
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+### Stop Service
+```bash
+# Kill by process name
+pkill -f uvicorn
+
+# Or use Ctrl+C in the terminal where it's running
+```
+
+### Check if Running
+```bash
+# Check if port 8000 is in use
+lsof -ti:8000
+
+# Test health endpoint
+curl http://localhost:8000/health
+```
+
+## 🧪 Test
+
+```bash
+# Test sentiment analysis
+python test_simple.py
+
+# Fetch and analyze conversations
+python fetch_and_analyze.py
+```
+
+## 📝 Example Usage
+
+### Get Agent Overview (Main Feature)
+```bash
+# Replace 'my-agent-123' with your actual ElevenLabs agent ID
+curl http://localhost:8000/agent/my-agent-123/overview
+```
+
+**Response:**
+```json
+{
+  "agent_id": "my-agent-123",
+  "total_conversations": 25,
+  "overall_sentiment": {
+    "average_score": 0.234,
+    "classification": "positive"
+  },
+  "sentiment_breakdown": {
+    "counts": {"positive": 15, "negative": 5, "neutral": 5},
+    "percentages": {"positive": 60.0, "negative": 20.0, "neutral": 20.0}
+  },
+  "key_insights": {
+    "what_customers_love": [
+      "Customers praise the helpful and responsive support team",
+      "Fast response times and quick issue resolution are highly valued"
+    ],
+    "areas_for_improvement": [
+      "Product quality issues reported - focus on reliability",
+      "Slow response times causing customer frustration"
+    ]
+  }
+}
+```
+
+### Other Examples
+```bash
+# Analyze custom text
+curl -X POST http://localhost:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Great service!"}'
+
+# Get individual conversations
+curl http://localhost:8000/agent/my-agent-123/conversations
+```
+
+## ⚙️ Optional: Ollama Setup
+
+For better analysis, install Ollama:
+
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull model
+ollama pull qwen2:7b
+```
+
+## 📁 Project Structure
+
+```
+app/
+├── main.py              # FastAPI app
+└── services/
+    ├── simple_analyzer.py   # Sentiment analysis
+    └── elevenlabs.py       # ElevenLabs client
+```
+
+That's it! 🎉.

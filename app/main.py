@@ -1,67 +1,213 @@
-from fastapi import FastAPI
+"""
+Ultra-simple FastAPI app for ElevenLabs sentiment analysis.
+"""
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Dict, Any, List
 import logging
-from app.core.config import settings
-from app.api.endpoints import router
-from app.api.webhook_endpoints import webhook_router
-from app.db.database import engine
-from app.models import conversation
 
-# Configure logging
+from app.services.simple_analyzer import SimpleAnalyzer
+from app.services.elevenlabs import ElevenLabsClient
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create database tables
-conversation.Base.metadata.create_all(bind=engine)
-
-# Create FastAPI app
 app = FastAPI(
-    title="Feedback Insights API",
-    description="Real-time sentiment analysis and insights from ElevenLabs Voice Agent conversations",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    title="ElevenLabs Sentiment API",
+    description="Simple sentiment analysis for ElevenLabs conversations",
+    version="1.0.0"
 )
 
-# Add CORS middleware for public API access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your domains
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(router, prefix="/api/v1", tags=["insights"])
-app.include_router(webhook_router, prefix="/api/v1", tags=["webhooks"])
+analyzer = SimpleAnalyzer()
+client = ElevenLabsClient()
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information."""
+    return {"message": "ElevenLabs Sentiment API", "docs": "/docs"}
+
+@app.get("/health")
+async def health():
+    healthy = await analyzer.health_check()
+    return {"status": "healthy" if healthy else "degraded"}
+
+@app.post("/analyze")
+async def analyze(data: Dict[str, str]):
+    text = data.get("text", "")
+    if not text:
+        raise HTTPException(400, "Text required")
+    return await analyzer.analyze_sentiment(text)
+
+@app.get("/agent/{agent_id}/overview")
+async def agent_sentiment_overview(agent_id: str):
+    """Get comprehensive sentiment overview for a voice agent."""
+    convs = await client.get_agent_conversations(agent_id, limit=100)
+    
+    if not convs:
+        raise HTTPException(404, f"No conversations found for agent {agent_id}")
+    
+    # Analyze all conversations
+    results = []
+    sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
+    total_score = 0.0
+    positive_themes = []
+    negative_themes = []
+    
+    for conv in convs:
+        sentiment = await analyzer.analyze_sentiment(conv["transcript"])
+        
+        # Count sentiments
+        sentiment_counts[sentiment["sentiment_label"]] += 1
+        total_score += sentiment["sentiment_score"]
+        
+        # Extract key themes from high-confidence feedback
+        if sentiment["sentiment_label"] == "positive" and sentiment["confidence"] > 0.6:
+            positive_themes.extend(_extract_themes(conv["transcript"], "positive"))
+        elif sentiment["sentiment_label"] == "negative" and sentiment["confidence"] > 0.6:
+            negative_themes.extend(_extract_themes(conv["transcript"], "negative"))
+        
+        results.append({
+            "conversation_id": conv["id"],
+            "sentiment": sentiment,
+            "duration": conv.get("duration", 0)
+        })
+    
+    # Calculate averages and percentages
+    total_conversations = len(convs)
+    avg_score = total_score / total_conversations if total_conversations > 0 else 0.0
+    
+    sentiment_percentages = {
+        "positive": round((sentiment_counts["positive"] / total_conversations) * 100, 1),
+        "negative": round((sentiment_counts["negative"] / total_conversations) * 100, 1),
+        "neutral": round((sentiment_counts["neutral"] / total_conversations) * 100, 1)
+    }
+    
+    # Generate key insights
+    good_insights = _generate_insights(positive_themes, "positive")
+    improvement_areas = _generate_insights(negative_themes, "negative")
+    
     return {
-        "message": "Feedback Insights API",
-        "version": "1.0.0",
-        "description": "Real-time sentiment analysis from ElevenLabs Voice Agent conversations",
-        "docs": "/docs",
-        "endpoints": {
-            "sync_conversations": "/api/v1/sync-conversations/{agent_id}",
-            "sentiment_overview": "/api/v1/sentiment-overview/{agent_id}",
-            "key_insights": "/api/v1/insights/{agent_id}",
-            "trending_topics": "/api/v1/trending-topics/{agent_id}",
-            "sentiment_trend": "/api/v1/sentiment-trend/{agent_id}",
-            "dashboard": "/api/v1/dashboard/{agent_id}",
-            "webhook": "/api/v1/webhook/elevenlabs",
-            "webhook_sync": "/api/v1/webhook/elevenlabs/sync",
-            "webhook_test": "/api/v1/webhook/test"
+        "agent_id": agent_id,
+        "total_conversations": total_conversations,
+        "overall_sentiment": {
+            "average_score": round(avg_score, 3),
+            "classification": "positive" if avg_score > 0.1 else "negative" if avg_score < -0.1 else "neutral"
+        },
+        "sentiment_breakdown": {
+            "counts": sentiment_counts,
+            "percentages": sentiment_percentages
+        },
+        "key_insights": {
+            "what_customers_love": good_insights,
+            "areas_for_improvement": improvement_areas
+        },
+        "conversations": results
+    }
+
+def _extract_themes(text: str, sentiment_type: str) -> list:
+    """Extract key themes from conversation text."""
+    text_lower = text.lower()
+    
+    if sentiment_type == "positive":
+        themes = []
+        if any(word in text_lower for word in ["helpful", "support", "team", "service"]):
+            themes.append("customer_support")
+        if any(word in text_lower for word in ["quick", "fast", "resolved", "efficient"]):
+            themes.append("response_time")
+        if any(word in text_lower for word in ["quality", "excellent", "amazing", "fantastic"]):
+            themes.append("product_quality")
+        if any(word in text_lower for word in ["professional", "knowledgeable", "expert"]):
+            themes.append("staff_expertise")
+        if any(word in text_lower for word in ["easy", "simple", "straightforward"]):
+            themes.append("ease_of_use")
+        return themes
+    
+    else:  # negative
+        themes = []
+        if any(word in text_lower for word in ["waiting", "slow", "delay", "hours"]):
+            themes.append("response_time")
+        if any(word in text_lower for word in ["help", "support", "nobody", "unhelpful"]):
+            themes.append("customer_support")
+        if any(word in text_lower for word in ["broken", "doesn't work", "quality", "terrible"]):
+            themes.append("product_quality")
+        if any(word in text_lower for word in ["confusing", "difficult", "complicated"]):
+            themes.append("ease_of_use")
+        if any(word in text_lower for word in ["expensive", "money", "waste", "cost"]):
+            themes.append("pricing")
+        return themes
+
+def _generate_insights(themes: list, sentiment_type: str) -> list:
+    """Generate concise insights from theme analysis."""
+    if not themes:
+        return []
+    
+    # Count theme frequency
+    theme_counts = {}
+    for theme in themes:
+        theme_counts[theme] = theme_counts.get(theme, 0) + 1
+    
+    # Sort by frequency
+    sorted_themes = sorted(theme_counts.items(), key=lambda x: x[1], reverse=True)
+    
+    insights = []
+    theme_messages = {
+        "customer_support": {
+            "positive": "Customers praise the helpful and responsive support team",
+            "negative": "Customer support needs improvement - customers report unhelpful interactions"
+        },
+        "response_time": {
+            "positive": "Fast response times and quick issue resolution are highly valued",
+            "negative": "Slow response times causing customer frustration - need faster support"
+        },
+        "product_quality": {
+            "positive": "Product quality consistently exceeds customer expectations",
+            "negative": "Product quality issues reported - focus on reliability and functionality"
+        },
+        "staff_expertise": {
+            "positive": "Customers appreciate knowledgeable and professional staff",
+            "negative": "Staff training needed to improve expertise and professionalism"
+        },
+        "ease_of_use": {
+            "positive": "Simple and intuitive user experience drives satisfaction",
+            "negative": "Product complexity causing confusion - simplify user experience"
+        },
+        "pricing": {
+            "positive": "Customers find good value for money",
+            "negative": "Pricing concerns - customers question value proposition"
         }
     }
+    
+    for theme, count in sorted_themes[:3]:  # Top 3 themes
+        if theme in theme_messages:
+            insights.append(theme_messages[theme][sentiment_type])
+    
+    return insights
+
+@app.get("/agent/{agent_id}/conversations")
+async def get_agent_conversations(agent_id: str, limit: int = 50):
+    """Get conversations for a specific agent with sentiment analysis."""
+    convs = await client.get_agent_conversations(agent_id, limit)
+    results = []
+    
+    for conv in convs:
+        sentiment = await analyzer.analyze_sentiment(conv["transcript"])
+        results.append({
+            "id": conv["id"],
+            "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
+            "sentiment": sentiment,
+            "created_at": conv["created_at"],
+            "duration": conv.get("duration", 0)
+        })
+    
+    return {"agent_id": agent_id, "conversations": results}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host=settings.host,
-        port=settings.port,
-        reload=settings.debug
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)
