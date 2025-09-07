@@ -13,6 +13,7 @@ load_dotenv()
 
 from app.services.simple_analyzer import SimpleAnalyzer
 from app.services.elevenlabs import ElevenLabsClient
+from app.services.insights_generator import ProductInsightsGenerator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,8 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize services
 analyzer = SimpleAnalyzer()
 client = ElevenLabsClient()
+insights_generator = ProductInsightsGenerator()
 
 @app.get("/")
 async def root():
@@ -209,6 +212,59 @@ async def get_agent_conversations(agent_id: str, limit: int = 50):
         })
     
     return {"agent_id": agent_id, "conversations": results}
+
+@app.get("/agent/{agent_id}/insights")
+async def get_product_insights(agent_id: str):
+    """Get comprehensive product insights with P0/P1/P2 prioritization."""
+    try:
+        # Get real conversations from ElevenLabs
+        convs = await client.get_agent_conversations(agent_id, limit=100)
+        
+        # Process conversations for sentiment analysis
+        processed_conversations = []
+        for conv in convs:
+            sentiment = await analyzer.analyze_sentiment(conv["transcript"])
+            processed_conversations.append({
+                **conv,
+                "sentiment_score": sentiment["sentiment_score"],
+                "sentiment_label": sentiment["sentiment_label"],
+                "confidence": sentiment["confidence"]
+            })
+        
+        # Generate comprehensive insights
+        insights = insights_generator.generate_comprehensive_insights(processed_conversations)
+        
+        return {
+            "agent_id": agent_id,
+            "generated_at": "2024-01-15T18:30:00Z",
+            "insights": insights
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating insights for agent {agent_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
+
+@app.get("/agent/{agent_id}/mock-conversations")
+async def get_mock_conversations(agent_id: str):
+    """Get mock conversations for testing insights generation."""
+    mock_convs = insights_generator.get_mock_conversations()
+    
+    # Add sentiment analysis to mock conversations
+    processed_mock = []
+    for conv in mock_convs:
+        sentiment = await analyzer.analyze(conv["transcript"])
+        processed_mock.append({
+            **conv,
+            "agent_id": agent_id,
+            "sentiment_label": sentiment["sentiment_label"],
+            "confidence": sentiment["confidence"]
+        })
+    
+    return {
+        "agent_id": agent_id,
+        "mock_conversations": processed_mock,
+        "total_count": len(processed_mock)
+    }
 
 if __name__ == "__main__":
     import uvicorn
