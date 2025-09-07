@@ -14,6 +14,11 @@ class ElevenLabsClient:
             "Content-Type": "application/json"
         }
     
+    async def get_latest_conversation(self, agent_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch only the latest conversation for a specific voice agent."""
+        conversations = await self.get_agent_conversations(agent_id, limit=50)
+        return conversations[0] if conversations else None
+    
     async def get_agent_conversations(self, agent_id: str, limit: int = 100) -> List[Dict[str, Any]]:
         """Fetch conversations for a specific voice agent."""
         if not self.api_key:

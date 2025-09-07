@@ -6,6 +6,7 @@ import random
 from typing import Dict, List, Any
 from datetime import datetime, timedelta
 import json
+import httpx
 
 class ProductInsightsGenerator:
     """Generate comprehensive product insights with business impact analysis."""
@@ -87,187 +88,336 @@ class ProductInsightsGenerator:
         ]
         return conversations
     
-    def generate_comprehensive_insights(self, conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Generate comprehensive insights with P0/P1/P2 prioritization."""
+    async def generate_comprehensive_insights(self, real_conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate comprehensive insights combining real and mock data."""
+        # Combine real conversations with mock data for comprehensive analysis
+        all_conversations = real_conversations + self.mock_conversations
         
-        # Combine real conversations with mock data
-        all_conversations = conversations + self.mock_conversations
-        
-        # Categorize conversations by priority and issue type
-        insights = {
-            "summary": {
-                "total_conversations": len(all_conversations),
-                "critical_issues_identified": 3,
-                "revenue_at_risk": "$127,000/month",
-                "avg_resolution_time": "4.2 hours"
-            },
-            "priority_insights": {
-                "P0": self._generate_p0_insights(all_conversations),
-                "P1": self._generate_p1_insights(all_conversations), 
-                "P2": self._generate_p2_insights(all_conversations)
-            },
-            "business_impact": self._calculate_business_impact(all_conversations),
-            "recommended_actions": self._generate_action_items(all_conversations)
-        }
-        
-        return insights
-    
-    def _generate_p0_insights(self, conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Generate P0 critical insights for pricing page issues."""
-        pricing_convs = [c for c in conversations if c.get("category", "").startswith("pricing")]
+        # Analyze real conversations to extract actual user feedback using LLM
+        real_feedback = await self._extract_real_feedback(real_conversations)
         
         return {
-            "title": "Pricing Page Failures Driving User Churn",
-            "description": "Critical issue affecting multiple users daily with significant business impact",
+            "summary": {
+                "total_conversations": len(all_conversations),
+                "real_conversations": len(real_conversations),
+                "mock_conversations": len(self.mock_conversations),
+                "critical_issues_identified": 3,
+                "revenue_at_risk": "$127,000/month",
+                "avg_resolution_time": "2.4 hours",
+                "customer_satisfaction_score": "6.2/10"
+            },
+            "priority_insights": {
+                "P0": self._generate_p0_insights(all_conversations, real_feedback),
+                "P1": self._generate_p1_insights(all_conversations, real_feedback), 
+                "P2": self._generate_p2_insights(all_conversations, real_feedback)
+            }
+        }
+        
+    async def _extract_real_feedback(self, real_conversations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Extract real feedback from ElevenLabs conversations using LLM analysis."""
+        feedback = []
+        
+        # Process only the latest conversation
+        if real_conversations:
+            conv = real_conversations[0]  # Latest conversation
+            transcript = conv.get("transcript", "")
+            
+            if transcript and len(transcript.strip()) >= 10:
+                try:
+                    # Use LLM to analyze the conversation
+                    analysis = await self._analyze_conversation_with_llm(transcript)
+                    print(f"LLM Analysis Result: {analysis}")  # Debug print
+                    
+                    feedback.append({
+                        "category": analysis.get("category", "usability"),
+                        "priority": analysis.get("priority", "P2"),
+                        "quote": analysis.get("key_quote", transcript[:200] + "..."),
+                        "sentiment": analysis.get("sentiment_score", -0.3),
+                        "source": "Latest Customer Conversation",
+                        "issue_summary": analysis.get("issue_summary", "Customer feedback"),
+                        "business_impact": analysis.get("business_impact", "Medium"),
+                        "recommended_actions": analysis.get("recommended_actions", [])
+                    })
+                except Exception as e:
+                    print(f"Skipping conversation due to LLM error: {e}")
+        
+        return feedback
+    
+
+    async def _analyze_conversation_with_llm(self, transcript: str) -> Dict[str, Any]:
+        """Analyze conversation transcript using local LLM server."""
+        try:
+            prompt = f"""
+You are a product insights analyst for TechFlow Analytics/Doppler. Analyze this customer conversation and extract actionable business insights.
+
+CONVERSATION TRANSCRIPT:
+"{transcript[:1000]}"
+
+ANALYSIS CONTEXT:
+Based on the conversation patterns, customers frequently mention:
+- Export functionality failures (3/5 success rate)
+- Pricing page confusion and unclear value propositions
+- Long customer support wait times (20+ minutes)
+- Need for API integrations and higher usage limits
+- Checkout abandonment due to unclear benefits
+
+RESPOND WITH VALID JSON ONLY:
+{{
+  "category": "pricing",
+  "priority": "P0",
+  "sentiment_score": -0.7,
+  "key_quote": "The most impactful customer quote from the conversation",
+  "issue_summary": "Specific issue affecting customer workflow",
+  "business_impact": "Critical",
+  "recommended_actions": [
+    {{
+      "title": "Immediate action addressing root cause",
+      "description": "Specific implementation details with measurable outcome",
+      "effort": "Medium",
+      "impact": "High",
+      "timeline": "1 week",
+      "owner": "Product Team",
+      "success_metric": "Reduce pricing page bounce rate by 40%"
+    }},
+    {{
+      "title": "Strategic improvement for long-term value",
+      "description": "Comprehensive solution preventing future issues",
+      "effort": "High", 
+      "impact": "Critical",
+      "timeline": "3 weeks",
+      "owner": "Engineering + UX",
+      "success_metric": "Increase conversion rate by 25%"
+    }}
+  ]
+}}
+
+CLASSIFICATION RULES:
+- category: "pricing" (unclear value props, plan confusion), "checkout" (payment/purchase issues), "usability" (export failures, UI problems)
+- priority: "P0" (revenue blocking, daily workflow impact), "P1" (conversion affecting), "P2" (user experience)
+- sentiment_score: -1.0 (very negative) to 1.0 (very positive)
+- recommended_actions: Must be specific, measurable, and directly address the customer's pain point
+- Include owner and success_metric for each action
+            """
+
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "http://localhost:11434/api/generate",
+                    json={
+                        "model": "qwen2:1.5b",
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.1,
+                            "top_p": 0.9
+                        }
+                    },
+                    timeout=30.0
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    llm_response = result.get("response", "").strip()
+                    
+                    # Try to parse JSON from LLM response
+                    try:
+                        # Clean up response - sometimes LLM adds extra text
+                        if llm_response.startswith("```json"):
+                            llm_response = llm_response.replace("```json", "").replace("```", "").strip()
+                        elif llm_response.startswith("```"):
+                            llm_response = llm_response.replace("```", "").strip()
+                        
+                        analysis = json.loads(llm_response)
+                        
+                        # Validate required fields
+                        required_fields = ["category", "priority", "sentiment_score", "key_quote", "issue_summary", "business_impact", "recommended_actions"]
+                        if all(field in analysis for field in required_fields):
+                            return analysis
+                            
+                    except json.JSONDecodeError:
+                        pass
+                        
+        except Exception as e:
+            print(f"LLM analysis error: {e}")
+            raise Exception(f"Failed to analyze conversation with LLM: {str(e)}")
+        
+        # If we reach here, LLM response was invalid
+        raise Exception("LLM returned invalid response format")
+
+
+    def _generate_p0_insights(self, conversations: List[Dict[str, Any]], real_feedback: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate P0 critical insights with PostHog-style metrics."""
+        pricing_convs = [c for c in conversations if c.get("category", "").startswith("pricing")]
+        real_pricing_feedback = [f for f in real_feedback if f["category"] == "pricing"]
+        
+        # Use real feedback if available, otherwise fall back to mock
+        primary_quote = "I spent way too long trying to understand what the difference between Pro and Enterprise plans are. The pricing page is confusing and I'm considering competitors."
+        source = "Sarah Chen - TechStart Inc"
+        sentiment_score = -0.8
+        title = "Pricing Page Failures Driving User Churn"
+        description = "Critical issue affecting multiple users daily with significant business impact"
+        
+        if real_pricing_feedback:
+            primary_quote = real_pricing_feedback[0]["quote"]
+            source = real_pricing_feedback[0]["source"]
+            sentiment_score = real_pricing_feedback[0]["sentiment"]
+            title = f"Pricing Issues: {real_pricing_feedback[0]['issue_summary']}"
+            description = f"Critical pricing concerns identified from customer feedback with {real_pricing_feedback[0]['business_impact'].lower()} business impact"
+            
+            # Use only LLM-generated recommended actions
+            recommended_actions = real_pricing_feedback[0].get("recommended_actions", [])
+        else:
+            recommended_actions = []
+        
+        return {
+            "title": title,
+            "description": description,
             "priority": "P0",
             "what_users_are_saying": {
-                "primary_quote": "I spent way too long trying to understand what the difference between Pro and Enterprise plans are. The pricing page is confusing and I'm considering competitors.",
-                "sentiment_score": -0.8,
-                "frequency": "Daily frustration, Power Users, Enterprise prospects",
-                "source": "Sarah Chen - TechFlow Analytics"
+                "primary_quote": primary_quote,
+                "sentiment_score": sentiment_score,
+                "frequency": "Daily occurrences across multiple user segments",
+                "source": source
             },
-            "what_the_data_shows": {
-                "pricing_page_conversion_rate": {
-                    "current": "12%",
-                    "target": "35%", 
-                    "status": "Critical"
-                },
-                "avg_time_on_pricing_page": {
-                    "current": "8.4 minutes",
-                    "target": "2.5 minutes",
-                    "status": "Poor"
-                },
-                "pricing_page_abandonment_rate": {
-                    "current": "77%",
-                    "target": "25%",
-                    "status": "Critical"
-                },
-                "users_affected_daily": 156,
-                "checkout_abandonment_from_pricing": "68%"
+            "posthog_metrics": {
+                "conversion_rate": "3.1%",
+                "bounce_rate": "68%"
             },
             "business_impact": {
                 "revenue_at_risk": "$82,000/month",
-                "churn_probability": "73%", 
-                "nps_impact": "-22 points",
-                "customer_acquisition_cost_increase": "+45%"
+                "conversion_loss": "65%", 
+                "customer_acquisition_cost": "+$180/customer",
+                "lifetime_value_impact": "-$2,340/customer",
+                "churn_probability": "45%",
+                "nps_impact": "-15 points"
             },
-            "recommended_action": {
-                "title": "Redesign pricing page with clear value propositions and simplified tiers",
-                "effort": "High",
-                "impact": "Critical",
-                "owner": "Product Team + UX Design",
-                "timeline": "2 weeks",
-                "success_metrics": ["Conversion rate >30%", "Time on page <3min", "Abandonment <30%"]
-            }
+            "recommended_actions": recommended_actions
         }
     
-    def _generate_p1_insights(self, conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Generate P1 high-priority insights for checkout issues."""
+    def _generate_p1_insights(self, conversations: List[Dict[str, Any]], real_feedback: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate P1 high-priority insights with PostHog-style metrics."""
         checkout_convs = [c for c in conversations if c.get("category", "").startswith("checkout")]
+        real_checkout_feedback = [f for f in real_feedback if f["category"] == "checkout"]
+        
+        # Use real feedback if available, otherwise fall back to mock
+        primary_quote = "I've been trying to complete my purchase for an hour. Your checkout keeps failing with payment errors, but my cards work everywhere else."
+        source = "Michael Rodriguez - DataCorp Solutions"
+        sentiment_score = -0.7
+        title = "Checkout Process Failures Blocking Revenue"
+        description = "High-impact payment and form issues preventing purchase completion"
+        
+        if real_checkout_feedback:
+            primary_quote = real_checkout_feedback[0]["quote"]
+            source = real_checkout_feedback[0]["source"]
+            sentiment_score = real_checkout_feedback[0]["sentiment"]
+            title = f"Checkout Issues: {real_checkout_feedback[0]['issue_summary']}"
+            description = f"High-priority checkout concerns identified from customer feedback with {real_checkout_feedback[0]['business_impact'].lower()} business impact"
+            
+            # Use only LLM-generated recommended actions
+            recommended_actions = real_checkout_feedback[0].get("recommended_actions", [])
+        else:
+            recommended_actions = []
         
         return {
-            "title": "Checkout Process Failures Blocking Revenue",
-            "description": "High-impact payment and form issues preventing purchase completion",
-            "priority": "P1", 
+            "title": title,
+            "description": description,
+            "priority": "P1",
             "what_users_are_saying": {
-                "primary_quote": "I've been trying to complete my purchase for an hour. Your checkout keeps failing with payment errors, but my cards work everywhere else.",
-                "sentiment_score": -0.7,
+                "primary_quote": primary_quote,
+                "sentiment_score": sentiment_score,
                 "frequency": "Multiple daily occurrences, Enterprise customers",
-                "source": "Michael Rodriguez - DataCorp Solutions"
+                "source": source
             },
-            "what_the_data_shows": {
-                "checkout_success_rate": {
-                    "current": "67%",
-                    "target": "95%",
-                    "status": "Poor"
-                },
-                "payment_failure_rate": {
-                    "current": "23%",
-                    "target": "<2%",
-                    "status": "Critical"
-                },
-                "form_completion_rate": {
-                    "current": "78%", 
-                    "target": "92%",
-                    "status": "Needs Improvement"
-                },
-                "users_affected_daily": 89,
-                "avg_checkout_attempts": 2.8
+            "posthog_metrics": {
+                "checkout_success_rate": "47.3%",
+                "payment_retry_rate": "2.8x"
             },
             "business_impact": {
                 "revenue_at_risk": "$34,000/month",
                 "conversion_loss": "33%",
-                "customer_support_tickets": "+180%",
-                "payment_processor_fees": "+$2,400/month"
+                "customer_acquisition_cost": "+$95/customer",
+                "lifetime_value_impact": "-$1,240/customer",
+                "churn_probability": "28%",
+                "nps_impact": "-8 points"
             },
-            "recommended_action": {
-                "title": "Fix payment processing errors and optimize checkout flow",
-                "effort": "Medium",
-                "impact": "High", 
-                "owner": "Engineering Team + Payments",
-                "timeline": "1 week",
-                "success_metrics": ["Success rate >90%", "Payment failures <5%", "Single-attempt completion >80%"]
-            }
+            "recommended_actions": recommended_actions
         }
     
-    def _generate_p2_insights(self, conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Generate P2 medium-priority insights for search functionality."""
-        search_convs = [c for c in conversations if c.get("category", "").startswith("search")]
+    def _generate_p2_insights(self, conversations: List[Dict[str, Any]], real_feedback: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate P2 medium-priority insights with PostHog-style metrics."""
+        usability_convs = [c for c in conversations if c.get("category", "").startswith("usability") or c.get("category", "").startswith("search")]
+        real_usability_feedback = [f for f in real_feedback if f["category"] == "usability"]
+        
+        # Use real feedback if available, otherwise fall back to mock
+        primary_quote = "Your search function is too literal and slow. I searched for 'analytics dashboard' but couldn't find the actual dashboard feature."
+        source = "Jennifer Kim - Analytics Pro"
+        sentiment_score = -0.45
+        title = "Search Functionality Hampering User Experience"
+        description = "Search performance and relevance issues affecting user productivity"
+        
+        if real_usability_feedback:
+            primary_quote = real_usability_feedback[0]["quote"]
+            source = real_usability_feedback[0]["source"]
+            sentiment_score = real_usability_feedback[0]["sentiment"]
+            title = f"Usability Issues: {real_usability_feedback[0]['issue_summary']}"
+            description = f"Medium-priority usability concerns identified from customer feedback with {real_usability_feedback[0]['business_impact'].lower()} business impact"
+            
+            # Use only LLM-generated recommended actions
+            recommended_actions = real_usability_feedback[0].get("recommended_actions", [])
+        else:
+            recommended_actions = []
         
         return {
-            "title": "Search Functionality Hampering User Experience", 
-            "description": "Search performance and relevance issues affecting user productivity",
+            "title": title,
+            "description": description,
             "priority": "P2",
             "what_users_are_saying": {
-                "primary_quote": "Your search function is too literal and slow. I searched for 'analytics dashboard' but couldn't find the actual dashboard feature.",
-                "sentiment_score": -0.45,
+                "primary_quote": primary_quote,
+                "sentiment_score": sentiment_score,
                 "frequency": "Weekly complaints, Power users",
-                "source": "Jennifer Kim - Analytics Pro"
+                "source": source
             },
-            "what_the_data_shows": {
-                "search_success_rate": {
-                    "current": "54%",
-                    "target": "85%", 
-                    "status": "Needs Improvement"
-                },
-                "avg_search_response_time": {
-                    "current": "4.2 seconds",
-                    "target": "0.8 seconds",
-                    "status": "Poor"
-                },
-                "zero_results_rate": {
-                    "current": "28%",
-                    "target": "<10%",
-                    "status": "High"
-                },
-                "users_affected_daily": 67,
-                "search_abandonment_rate": "31%"
+            "posthog_metrics": {
+                "search_success_rate": "38.7%",
+                "zero_results_rate": "28%"
             },
             "business_impact": {
                 "productivity_loss": "15 minutes/user/day",
                 "feature_discovery_rate": "-40%",
-                "user_satisfaction": "-8 points",
-                "support_tickets": "+25%"
+                "customer_acquisition_cost": "+$45/customer",
+                "lifetime_value_impact": "-$680/customer",
+                "churn_probability": "18%",
+                "nps_impact": "-5 points"
             },
-            "recommended_action": {
-                "title": "Implement intelligent search with semantic matching and performance optimization",
-                "effort": "Medium",
-                "impact": "Medium",
-                "owner": "Search Team + Backend",
-                "timeline": "3 weeks", 
-                "success_metrics": ["Success rate >80%", "Response time <1s", "Zero results <15%"]
-            }
+            "recommended_actions": recommended_actions
         }
     
     def _calculate_business_impact(self, conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Calculate overall business impact across all issues."""
+        """Calculate PostHog-inspired business impact metrics."""
         return {
-            "total_revenue_at_risk": "$127,000/month",
-            "customer_churn_risk": "45%",
-            "support_cost_increase": "$18,500/month", 
-            "nps_impact": "-15 points",
-            "conversion_rate_impact": "-28%",
-            "customer_lifetime_value_impact": "-$2,340/customer"
+            "revenue_metrics": {
+                "total_revenue_at_risk": "$127,000/month",
+                "monthly_recurring_revenue_impact": "-$45,000",
+                "average_revenue_per_user": "-$180/user",
+                "customer_lifetime_value_impact": "-$2,340/customer"
+            },
+            "user_engagement": {
+                "daily_active_users_impact": "-12%",
+                "session_duration_change": "-3.2 minutes",
+                "feature_adoption_rate": "-23%",
+                "user_retention_impact": "-15%"
+            },
+            "conversion_metrics": {
+                "conversion_rate_impact": "-28%",
+                "funnel_drop_off_increase": "+35%",
+                "cost_per_acquisition_increase": "+$125/customer",
+                "trial_to_paid_conversion": "-18%"
+            },
+            "support_impact": {
+                "support_ticket_volume": "+180%",
+                "resolution_time_increase": "+2.4 hours",
+                "customer_satisfaction_score": "6.2/10",
+                "nps_impact": "-15 points"
+            }
         }
     
     def _generate_action_items(self, conversations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

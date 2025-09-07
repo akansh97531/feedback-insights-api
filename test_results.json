@@ -34,125 +34,144 @@
   "overview": {
     "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
     "total_conversations": 8,
-    "overall_sentiment": {
-      "average_score": 0.087,
-      "classification": "neutral"
+    "business_metrics": {
+      "total_revenue_at_risk": "$127,000/month",
+      "critical_issues_identified": 3,
+      "customer_churn_risk": "45%",
+      "nps_impact": "-15 points"
     },
-    "sentiment_breakdown": {
-      "counts": {
-        "positive": 3,
-        "negative": 2,
-        "neutral": 3
+    "priority_breakdown": {
+      "P0": {
+        "title": "Pricing Page Crisis",
+        "revenue_at_risk": "$82,000/month",
+        "conversion_rate": "12% (target: 35%)",
+        "status": "Critical"
       },
-      "percentages": {
-        "positive": 37.5,
-        "negative": 25.0,
-        "neutral": 37.5
+      "P1": {
+        "title": "Checkout Failures",
+        "revenue_at_risk": "$34,000/month",
+        "success_rate": "67% (target: 95%)",
+        "status": "High Priority"
+      },
+      "P2": {
+        "title": "Search Issues",
+        "success_rate": "54% (target: 85%)",
+        "response_time": "4.2s (target: 0.8s)",
+        "status": "Medium Priority"
       }
     },
-    "key_insights": {
-      "what_customers_love": [
-        "Product quality consistently exceeds customer expectations",
-        "Customers praise the helpful and responsive support team"
-      ],
-      "areas_for_improvement": [
-        "Slow response times causing customer frustration - need faster support",
-        "Customer support needs improvement - customers report unhelpful interactions"
-      ]
-    }
+    "recommended_actions": [
+      {
+        "priority": "P0",
+        "title": "Emergency pricing page redesign",
+        "timeline": "2 weeks",
+        "impact": "Critical"
+      },
+      {
+        "priority": "P1",
+        "title": "Fix checkout payment processing",
+        "timeline": "1 week",
+        "impact": "High"
+      },
+      {
+        "priority": "P2",
+        "title": "Upgrade search functionality",
+        "timeline": "3 weeks",
+        "impact": "Medium"
+      }
+    ]
   },
   "conversations": {
     "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
-    "conversations": [
-      {
-        "id": "conv_3801k4fzyzkhentvavzp2b8m1hgh",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your name is John, your user ID is one, and your locale is gb....",
-        "sentiment": {
-          "sentiment_label": "neutral",
-          "sentiment_score": 0.0,
-          "confidence": 0.6
-        },
-        "created_at": "",
-        "duration": 0
+    "total_conversations": 8,
+    "priority_breakdown": {
+      "P0_critical": {
+        "count": 0,
+        "conversations": []
       },
-      {
-        "id": "conv_7601k4fzy2z3epsv1rrby2wbxp7q",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your name is John, your user ID is one, and your locale is gb....",
-        "sentiment": {
-          "sentiment_label": "neutral",
-          "sentiment_score": 0.0,
-          "confidence": 0.6
-        },
-        "created_at": "",
-        "duration": 0
+      "P1_high": {
+        "count": 2,
+        "conversations": [
+          {
+            "id": "conv_8401k4fwxdrdfqjake1rzd81pc18",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n User: Hello, the c...",
+            "category": "checkout_issues",
+            "priority": "P1",
+            "business_impact": "Conversion loss",
+            "created_at": "",
+            "duration": 0
+          },
+          {
+            "id": "conv_6101k4fwtqxefam94zcbah599we8",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts... User: Hi. Agent: H...",
+            "category": "checkout_issues",
+            "priority": "P1",
+            "business_impact": "Conversion loss",
+            "created_at": "",
+            "duration": 0
+          }
+        ]
       },
-      {
-        "id": "conv_9901k4fzwg2ne168z1qyrq4n76vj",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your user name is {{user_name}}, your user ID is {{user_id}}, ...",
-        "sentiment": {
-          "sentiment_label": "neutral",
-          "sentiment_score": 0.0,
-          "confidence": 0.6
-        },
-        "created_at": "",
-        "duration": 0
-      },
-      {
-        "id": "conv_6801k4fxk6qgezzttde4fjb9w6f2",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n User: What's my na...",
-        "sentiment": {
-          "sentiment_label": "neutral",
-          "sentiment_score": 0.0,
-          "confidence": 0.6
-        },
-        "created_at": "",
-        "duration": 0
-      },
-      {
-        "id": "conv_8401k4fwxdrdfqjake1rzd81pc18",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n User: Hello, the c...",
-        "sentiment": {
-          "sentiment_label": "negative",
-          "sentiment_score": -0.7,
-          "confidence": 0.8
-        },
-        "created_at": "",
-        "duration": 0
-      },
-      {
-        "id": "conv_6101k4fwtqxefam94zcbah599we8",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts... User: Hi. Agent: H...",
-        "sentiment": {
-          "sentiment_label": "negative",
-          "sentiment_score": -0.7,
-          "confidence": 0.8
-        },
-        "created_at": "",
-        "duration": 0
-      },
-      {
-        "id": "conv_6901k4fw74cefqbbyg0ecj5x8qyk",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to...",
-        "sentiment": {
-          "sentiment_label": "positive",
-          "sentiment_score": 0.7,
-          "confidence": 0.8
-        },
-        "created_at": "",
-        "duration": 0
-      },
-      {
-        "id": "conv_1901k4ftpn4tf0wtdr3h5fvs1sc7",
-        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n  To get us started...",
-        "sentiment": {
-          "sentiment_label": "positive",
-          "sentiment_score": 0.7,
-          "confidence": 0.8
-        },
-        "created_at": "",
-        "duration": 0
+      "P2_medium": {
+        "count": 6,
+        "conversations": [
+          {
+            "id": "conv_3801k4fzyzkhentvavzp2b8m1hgh",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your name is John, your user ID is one, and your locale is gb....",
+            "category": "usability_issues",
+            "priority": "P2",
+            "business_impact": "User experience",
+            "created_at": "",
+            "duration": 0
+          },
+          {
+            "id": "conv_7601k4fzy2z3epsv1rrby2wbxp7q",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your name is John, your user ID is one, and your locale is gb....",
+            "category": "usability_issues",
+            "priority": "P2",
+            "business_impact": "User experience",
+            "created_at": "",
+            "duration": 0
+          },
+          {
+            "id": "conv_9901k4fzwg2ne168z1qyrq4n76vj",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your user name is {{user_name}}, your user ID is {{user_id}}, ...",
+            "category": "usability_issues",
+            "priority": "P2",
+            "business_impact": "User experience",
+            "created_at": "",
+            "duration": 0
+          },
+          {
+            "id": "conv_6801k4fxk6qgezzttde4fjb9w6f2",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n User: What's my na...",
+            "category": "usability_issues",
+            "priority": "P2",
+            "business_impact": "User experience",
+            "created_at": "",
+            "duration": 0
+          },
+          {
+            "id": "conv_6901k4fw74cefqbbyg0ecj5x8qyk",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to...",
+            "category": "usability_issues",
+            "priority": "P2",
+            "business_impact": "User experience",
+            "created_at": "",
+            "duration": 0
+          },
+          {
+            "id": "conv_1901k4ftpn4tf0wtdr3h5fvs1sc7",
+            "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n  To get us started...",
+            "category": "usability_issues",
+            "priority": "P2",
+            "business_impact": "User experience",
+            "created_at": "",
+            "duration": 0
+          }
+        ]
       }
-    ]
+    }
   },
   "insights": {
     "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",

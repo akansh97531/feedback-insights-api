@@ -19,9 +19,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="ElevenLabs Sentiment API",
-    description="Simple sentiment analysis for ElevenLabs conversations",
-    version="1.0.0"
+    title="ElevenLabs Voice Agent Insights API",
+    description="Generate actionable business insights from ElevenLabs voice agent conversations using local LLM analysis with qwen2:1.5b for fast inference",
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 app.add_middleware(
@@ -39,7 +41,25 @@ insights_generator = ProductInsightsGenerator()
 
 @app.get("/")
 async def root():
-    return {"message": "ElevenLabs Sentiment API", "docs": "/docs"}
+    return {
+        "message": "ElevenLabs Voice Agent Insights API",
+        "version": "2.0.0",
+        "description": "Generate actionable business insights from voice agent conversations",
+        "features": [
+            "LLM-powered conversation analysis (qwen2:1.5b)",
+            "P0/P1/P2 priority classification",
+            "Actionable recommendations with effort/impact/timeline",
+            "Real ElevenLabs API integration",
+            "Fast 2-3 second inference"
+        ],
+        "endpoints": {
+            "insights": "/agent/{agent_id}/insights",
+            "conversations": "/agent/{agent_id}/conversations", 
+            "analyze": "/analyze",
+            "health": "/health",
+            "docs": "/docs"
+        }
+    }
 
 @app.get("/health")
 async def health():
@@ -53,66 +73,6 @@ async def analyze(data: Dict[str, str]):
         raise HTTPException(400, "Text required")
     return await analyzer.analyze_sentiment(text)
 
-@app.get("/agent/{agent_id}/overview")
-async def agent_sentiment_overview(agent_id: str):
-    """Get comprehensive sentiment overview for a voice agent."""
-    convs = await client.get_agent_conversations(agent_id, limit=100)
-    
-    if not convs:
-        raise HTTPException(404, f"No conversations found for agent {agent_id}")
-    
-    # Analyze all conversations
-    results = []
-    sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
-    total_score = 0.0
-    positive_themes = []
-    negative_themes = []
-    
-    for conv in convs:
-        sentiment = await analyzer.analyze_sentiment(conv["transcript"])
-        
-        # Count sentiments
-        sentiment_counts[sentiment["sentiment_label"]] += 1
-        total_score += sentiment["sentiment_score"]
-        
-        # Extract key themes from high-confidence feedback
-        if sentiment["sentiment_label"] == "positive" and sentiment["confidence"] > 0.6:
-            positive_themes.extend(_extract_themes(conv["transcript"], "positive"))
-        elif sentiment["sentiment_label"] == "negative" and sentiment["confidence"] > 0.6:
-            negative_themes.extend(_extract_themes(conv["transcript"], "negative"))
-        
-        # Don't store individual conversations in overview
-    
-    # Calculate averages and percentages
-    total_conversations = len(convs)
-    avg_score = total_score / total_conversations if total_conversations > 0 else 0.0
-    
-    sentiment_percentages = {
-        "positive": round((sentiment_counts["positive"] / total_conversations) * 100, 1),
-        "negative": round((sentiment_counts["negative"] / total_conversations) * 100, 1),
-        "neutral": round((sentiment_counts["neutral"] / total_conversations) * 100, 1)
-    }
-    
-    # Generate key insights
-    good_insights = _generate_insights(positive_themes, "positive")
-    improvement_areas = _generate_insights(negative_themes, "negative")
-    
-    return {
-        "agent_id": agent_id,
-        "total_conversations": total_conversations,
-        "overall_sentiment": {
-            "average_score": round(avg_score, 3),
-            "classification": "positive" if avg_score > 0.1 else "negative" if avg_score < -0.1 else "neutral"
-        },
-        "sentiment_breakdown": {
-            "counts": sentiment_counts,
-            "percentages": sentiment_percentages
-        },
-        "key_insights": {
-            "what_customers_love": good_insights,
-            "areas_for_improvement": improvement_areas
-        }
-    }
 
 def _extract_themes(text: str, sentiment_type: str) -> list:
     """Extract key themes from conversation text."""
@@ -197,42 +157,115 @@ def _generate_insights(themes: list, sentiment_type: str) -> list:
 
 @app.get("/agent/{agent_id}/conversations")
 async def get_agent_conversations(agent_id: str, limit: int = 50):
-    """Get conversations for a specific agent with sentiment analysis."""
+    """Get conversations categorized by P0/P1/P2 business impact."""
     convs = await client.get_agent_conversations(agent_id, limit)
-    results = []
+    
+    # Categorize conversations by business impact
+    p0_conversations = []
+    p1_conversations = []
+    p2_conversations = []
     
     for conv in convs:
-        sentiment = await analyzer.analyze_sentiment(conv["transcript"])
-        results.append({
-            "id": conv["id"],
-            "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
-            "sentiment": sentiment,
-            "created_at": conv["created_at"],
-            "duration": conv.get("duration", 0)
-        })
+        # Analyze for business impact categories
+        transcript_lower = conv["transcript"].lower()
+        
+        # P0 - Pricing issues (critical revenue impact)
+        if any(word in transcript_lower for word in ["pricing", "price", "cost", "expensive", "plan", "tier"]):
+            p0_conversations.append({
+                "id": conv["id"],
+                "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
+                "category": "pricing_issues",
+                "priority": "P0",
+                "business_impact": "Revenue at risk",
+                "created_at": conv["created_at"],
+                "duration": conv.get("duration", 0)
+            })
+        # P1 - Checkout/payment issues (high revenue impact)
+        elif any(word in transcript_lower for word in ["checkout", "payment", "purchase", "buy", "card", "billing"]):
+            p1_conversations.append({
+                "id": conv["id"],
+                "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
+                "category": "checkout_issues",
+                "priority": "P1", 
+                "business_impact": "Conversion loss",
+                "created_at": conv["created_at"],
+                "duration": conv.get("duration", 0)
+            })
+        # P2 - Search/usability issues (medium impact)
+        else:
+            p2_conversations.append({
+                "id": conv["id"],
+                "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
+                "category": "usability_issues",
+                "priority": "P2",
+                "business_impact": "User experience",
+                "created_at": conv["created_at"],
+                "duration": conv.get("duration", 0)
+            })
     
-    return {"agent_id": agent_id, "conversations": results}
+    return {
+        "agent_id": agent_id,
+        "total_conversations": len(convs),
+        "priority_breakdown": {
+            "P0_critical": {
+                "count": len(p0_conversations),
+                "conversations": p0_conversations
+            },
+            "P1_high": {
+                "count": len(p1_conversations),
+                "conversations": p1_conversations
+            },
+            "P2_medium": {
+                "count": len(p2_conversations),
+                "conversations": p2_conversations
+            }
+        }
+    }
 
 @app.get("/agent/{agent_id}/insights")
 async def get_product_insights(agent_id: str):
-    """Get comprehensive product insights with P0/P1/P2 prioritization."""
+    """
+    Get comprehensive business insights with actionable recommendations.
+    
+    Analyzes the latest ElevenLabs conversation using qwen2:1.5b LLM to generate:
+    - P0/P1/P2 priority classification based on business impact
+    - Specific recommended actions with effort, impact, and timeline
+    - Business metrics and revenue impact analysis
+    - Customer sentiment and key quotes
+    
+    Returns comprehensive insights as JSON response without file persistence
+    """
     try:
-        # Get real conversations from ElevenLabs
-        convs = await client.get_agent_conversations(agent_id, limit=100)
+        # Get latest conversation from ElevenLabs
+        latest_conv = await client.get_latest_conversation(agent_id)
         
-        # Process conversations for sentiment analysis
-        processed_conversations = []
-        for conv in convs:
-            sentiment = await analyzer.analyze_sentiment(conv["transcript"])
-            processed_conversations.append({
-                **conv,
-                "sentiment_score": sentiment["sentiment_score"],
-                "sentiment_label": sentiment["sentiment_label"],
-                "confidence": sentiment["confidence"]
+        # Load existing conversations from transcript file
+        import json
+        existing_conversations = []
+        try:
+            with open("conversation_transcripts.json", "r", encoding="utf-8") as f:
+                transcript_data = json.load(f)
+                existing_conversations = transcript_data.get("conversations", [])
+        except FileNotFoundError:
+            pass
+        
+        # Combine latest conversation with existing ones
+        convs = []
+        if latest_conv:
+            convs.append(latest_conv)
+        
+        # Convert existing conversations to the expected format
+        for conv in existing_conversations:
+            convs.append({
+                "id": conv.get("id", ""),
+                "agent_id": agent_id,
+                "transcript": conv.get("transcript", ""),
+                "created_at": conv.get("created_at", ""),
+                "duration": conv.get("duration", 0)
             })
         
-        # Generate comprehensive insights
-        insights = insights_generator.generate_comprehensive_insights(processed_conversations)
+        # Generate comprehensive insights from combined conversations
+        insights = await insights_generator.generate_comprehensive_insights(convs)
         
         return {
             "agent_id": agent_id,

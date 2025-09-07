@@ -74,91 +74,119 @@ class APITester:
         return results
     
     def test_overview_endpoint(self) -> Dict[str, Any]:
-        """Test agent overview endpoint with sentiment breakdown."""
+        """Test overview endpoint with P0/P1/P2 business metrics."""
         print("🔍 Testing /agent/{agent_id}/overview endpoint...")
-        
         response = requests.get(f"{self.base_url}/agent/{self.agent_id}/overview")
-        assert response.status_code == 200
         
+        assert response.status_code == 200
         data = response.json()
         
-        # Validate required fields
-        required_fields = ["agent_id", "total_conversations", "overall_sentiment", "sentiment_breakdown", "key_insights"]
+        # Validate structure for P0/P1/P2 prioritization
+        required_fields = ["agent_id", "total_conversations", "business_metrics", "priority_breakdown", "recommended_actions"]
         for field in required_fields:
-            assert field in data, f"Missing required field: {field}"
+            assert field in data, f"Missing field: {field}"
         
-        # Validate overall_sentiment structure
-        overall = data["overall_sentiment"]
-        assert "average_score" in overall
-        assert "classification" in overall
-        assert isinstance(overall["average_score"], (int, float))
-        assert overall["classification"] in ["positive", "negative", "neutral"]
+        # Validate business metrics focus on P0/P1/P2 impact
+        business_metrics = data["business_metrics"]
+        assert "total_revenue_at_risk" in business_metrics
+        assert "critical_issues_identified" in business_metrics
+        assert "customer_churn_risk" in business_metrics
+        assert "nps_impact" in business_metrics
         
-        # Validate sentiment_breakdown structure
-        breakdown = data["sentiment_breakdown"]
-        assert "counts" in breakdown
-        assert "percentages" in breakdown
+        # Validate P0/P1/P2 priority breakdown structure
+        priority_breakdown = data["priority_breakdown"]
+        assert "P0" in priority_breakdown
+        assert "P1" in priority_breakdown
+        assert "P2" in priority_breakdown
         
-        counts = breakdown["counts"]
-        percentages = breakdown["percentages"]
+        # Validate P0 (Critical) structure
+        p0_data = priority_breakdown["P0"]
+        assert "title" in p0_data
+        assert "revenue_at_risk" in p0_data
+        assert "status" in p0_data
+        assert p0_data["status"] == "Critical"
         
-        # Validate sentiment counts
-        for sentiment in ["positive", "negative", "neutral"]:
-            assert sentiment in counts
-            assert sentiment in percentages
-            assert isinstance(counts[sentiment], int)
-            assert isinstance(percentages[sentiment], (int, float))
-            assert 0 <= percentages[sentiment] <= 100
+        # Validate P1 (High Priority) structure
+        p1_data = priority_breakdown["P1"]
+        assert "title" in p1_data
+        assert "status" in p1_data
+        assert p1_data["status"] == "High Priority"
         
-        # Validate percentages sum to 100
-        total_percentage = sum(percentages.values())
-        assert abs(total_percentage - 100.0) < 0.1, f"Percentages don't sum to 100: {total_percentage}"
+        # Validate P2 (Medium Priority) structure
+        p2_data = priority_breakdown["P2"]
+        assert "title" in p2_data
+        assert "status" in p2_data
+        assert p2_data["status"] == "Medium Priority"
         
-        # Validate key_insights structure
-        insights = data["key_insights"]
-        assert "what_customers_love" in insights
-        assert "areas_for_improvement" in insights
-        assert isinstance(insights["what_customers_love"], list)
-        assert isinstance(insights["areas_for_improvement"], list)
+        # Validate recommended actions prioritized by P0/P1/P2
+        actions = data["recommended_actions"]
+        assert isinstance(actions, list)
+        assert len(actions) > 0
         
-        print(f"✅ Overview: {data['total_conversations']} conversations, {overall['classification']} sentiment")
-        print(f"   Breakdown: {percentages['positive']:.1f}% pos, {percentages['negative']:.1f}% neg, {percentages['neutral']:.1f}% neutral")
+        for action in actions:
+            assert "priority" in action
+            assert "title" in action
+            assert "timeline" in action
+            assert "impact" in action
+            assert action["priority"] in ["P0", "P1", "P2"]
+        
+        print(f"✅ Overview endpoint: {data['total_conversations']} conversations analyzed")
+        print(f"   💰 Revenue at risk: {business_metrics['total_revenue_at_risk']}")
+        print(f"   ⚠️  Critical issues: {business_metrics['critical_issues_identified']}")
+        print(f"   📊 Churn risk: {business_metrics['customer_churn_risk']}")
+        print(f"   🎯 P0 Critical: {p0_data['title']}")
+        print(f"   🔥 P1 High: {p1_data['title']}")
+        print(f"   📈 P2 Medium: {p2_data['title']}")
         
         return data
     
     def test_conversations_endpoint(self) -> Dict[str, Any]:
-        """Test conversations endpoint with detailed sentiment analysis."""
+        """Test conversations endpoint with P0/P1/P2 categorization."""
         print("🔍 Testing /agent/{agent_id}/conversations endpoint...")
-        
         response = requests.get(f"{self.base_url}/agent/{self.agent_id}/conversations")
-        assert response.status_code == 200
         
+        assert response.status_code == 200
         data = response.json()
         
-        # Validate structure
+        # Validate P0/P1/P2 structure
         assert "agent_id" in data
-        assert "conversations" in data
-        assert isinstance(data["conversations"], list)
+        assert "total_conversations" in data
+        assert "priority_breakdown" in data
         
-        # Validate each conversation
-        for conv in data["conversations"]:
-            required_fields = ["id", "transcript", "sentiment", "created_at", "duration"]
-            for field in required_fields:
-                assert field in conv, f"Missing field {field} in conversation"
-            
-            # Validate sentiment structure
-            sentiment = conv["sentiment"]
-            assert "sentiment_label" in sentiment
-            assert "sentiment_score" in sentiment
-            assert "confidence" in sentiment
-            
-            # Validate data types and ranges
-            assert isinstance(sentiment["sentiment_score"], (int, float))
-            assert isinstance(sentiment["confidence"], (int, float))
-            assert -1.0 <= sentiment["sentiment_score"] <= 1.0
-            assert 0.0 <= sentiment["confidence"] <= 1.0
+        priority_breakdown = data["priority_breakdown"]
+        assert "P0_critical" in priority_breakdown
+        assert "P1_high" in priority_breakdown
+        assert "P2_medium" in priority_breakdown
         
-        print(f"✅ Conversations: {len(data['conversations'])} conversations with detailed sentiment")
+        # Validate each priority level structure
+        for priority_level in ["P0_critical", "P1_high", "P2_medium"]:
+            level_data = priority_breakdown[priority_level]
+            assert "count" in level_data
+            assert "conversations" in level_data
+            assert isinstance(level_data["conversations"], list)
+            
+            # Validate conversation structure in each priority
+            if level_data["conversations"]:
+                conv = level_data["conversations"][0]
+                required_fields = ["id", "transcript", "category", "priority", "business_impact", "created_at"]
+                for field in required_fields:
+                    assert field in conv, f"Missing field in conversation: {field}"
+                
+                # Validate priority assignment
+                expected_priority = priority_level.split("_")[0]  # Extract P0, P1, P2
+                assert conv["priority"] == expected_priority
+                
+                # Validate business impact categories
+                assert conv["business_impact"] in ["Revenue at risk", "Conversion loss", "User experience"]
+                assert conv["category"] in ["pricing_issues", "checkout_issues", "usability_issues"]
+        
+        total_categorized = sum(level_data["count"] for level_data in priority_breakdown.values())
+        assert total_categorized == data["total_conversations"]
+        
+        print(f"✅ Conversations endpoint: {data['total_conversations']} conversations categorized")
+        print(f"   🚨 P0 Critical: {priority_breakdown['P0_critical']['count']} conversations")
+        print(f"   🔥 P1 High: {priority_breakdown['P1_high']['count']} conversations")
+        print(f"   📈 P2 Medium: {priority_breakdown['P2_medium']['count']} conversations")
         
         return data
     
@@ -357,17 +385,21 @@ class APITester:
         total_tests = len(analyze_results)
         print(f"🧠 Sentiment Analysis: {total_tests} test cases passed")
         
-        # Overview metrics
+        # Overview metrics (P0/P1/P2 focused)
         overview = results['overview']
         print(f"📈 Overview Metrics:")
         print(f"   Total conversations: {overview['total_conversations']}")
-        print(f"   Overall sentiment: {overview['overall_sentiment']['classification']}")
-        breakdown = overview['sentiment_breakdown']['percentages']
-        print(f"   Distribution: {breakdown['positive']:.1f}% pos, {breakdown['negative']:.1f}% neg, {breakdown['neutral']:.1f}% neu")
+        print(f"   Revenue at risk: {overview['business_metrics']['total_revenue_at_risk']}")
+        print(f"   Critical issues: {overview['business_metrics']['critical_issues_identified']}")
+        print(f"   Churn risk: {overview['business_metrics']['customer_churn_risk']}")
         
-        # Conversations
+        # Conversations (P0/P1/P2 breakdown)
         conversations = results['conversations']
-        print(f"💬 Conversations: {len(conversations['conversations'])} detailed conversations")
+        priority_breakdown = conversations['priority_breakdown']
+        print(f"💬 Conversations: {conversations['total_conversations']} categorized by priority")
+        print(f"   P0 Critical: {priority_breakdown['P0_critical']['count']}")
+        print(f"   P1 High: {priority_breakdown['P1_high']['count']}")
+        print(f"   P2 Medium: {priority_breakdown['P2_medium']['count']}")
         
         # Insights
         insights = results['insights']['insights']
