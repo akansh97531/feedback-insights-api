@@ -252,7 +252,7 @@ async def get_mock_conversations(agent_id: str):
     # Add sentiment analysis to mock conversations
     processed_mock = []
     for conv in mock_convs:
-        sentiment = await analyzer.analyze(conv["transcript"])
+        sentiment = await analyzer.analyze_sentiment(conv["transcript"])
         processed_mock.append({
             **conv,
             "agent_id": agent_id,

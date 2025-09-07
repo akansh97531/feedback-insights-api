@@ -1,0 +1,442 @@
+{
+  "health": {
+    "status": "healthy"
+  },
+  "analyze": [
+    {
+      "input": "Great service, very helpful team!",
+      "output": {
+        "sentiment_label": "positive",
+        "sentiment_score": 0.7,
+        "confidence": 0.8
+      },
+      "expected": "positive"
+    },
+    {
+      "input": "This is terrible, worst experience ever",
+      "output": {
+        "sentiment_label": "negative",
+        "sentiment_score": -0.7,
+        "confidence": 0.8
+      },
+      "expected": "negative"
+    },
+    {
+      "input": "It's okay, nothing special",
+      "output": {
+        "sentiment_label": "neutral",
+        "sentiment_score": 0.0,
+        "confidence": 0.6
+      },
+      "expected": "neutral"
+    }
+  ],
+  "overview": {
+    "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+    "total_conversations": 8,
+    "overall_sentiment": {
+      "average_score": 0.087,
+      "classification": "neutral"
+    },
+    "sentiment_breakdown": {
+      "counts": {
+        "positive": 3,
+        "negative": 2,
+        "neutral": 3
+      },
+      "percentages": {
+        "positive": 37.5,
+        "negative": 25.0,
+        "neutral": 37.5
+      }
+    },
+    "key_insights": {
+      "what_customers_love": [
+        "Product quality consistently exceeds customer expectations",
+        "Customers praise the helpful and responsive support team"
+      ],
+      "areas_for_improvement": [
+        "Slow response times causing customer frustration - need faster support",
+        "Customer support needs improvement - customers report unhelpful interactions"
+      ]
+    }
+  },
+  "conversations": {
+    "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+    "conversations": [
+      {
+        "id": "conv_3801k4fzyzkhentvavzp2b8m1hgh",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your name is John, your user ID is one, and your locale is gb....",
+        "sentiment": {
+          "sentiment_label": "neutral",
+          "sentiment_score": 0.0,
+          "confidence": 0.6
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_7601k4fzy2z3epsv1rrby2wbxp7q",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your name is John, your user ID is one, and your locale is gb....",
+        "sentiment": {
+          "sentiment_label": "neutral",
+          "sentiment_score": 0.0,
+          "confidence": 0.6
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_9901k4fzwg2ne168z1qyrq4n76vj",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. User: What's my name? Agent: Your user name is {{user_name}}, your user ID is {{user_id}}, ...",
+        "sentiment": {
+          "sentiment_label": "neutral",
+          "sentiment_score": 0.0,
+          "confidence": 0.6
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_6801k4fxk6qgezzttde4fjb9w6f2",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n User: What's my na...",
+        "sentiment": {
+          "sentiment_label": "neutral",
+          "sentiment_score": 0.0,
+          "confidence": 0.6
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_8401k4fwxdrdfqjake1rzd81pc18",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n User: Hello, the c...",
+        "sentiment": {
+          "sentiment_label": "negative",
+          "sentiment_score": -0.7,
+          "confidence": 0.8
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_6101k4fwtqxefam94zcbah599we8",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts... User: Hi. Agent: H...",
+        "sentiment": {
+          "sentiment_label": "negative",
+          "sentiment_score": -0.7,
+          "confidence": 0.8
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_6901k4fw74cefqbbyg0ecj5x8qyk",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to...",
+        "sentiment": {
+          "sentiment_label": "positive",
+          "sentiment_score": 0.7,
+          "confidence": 0.8
+        },
+        "created_at": "",
+        "duration": 0
+      },
+      {
+        "id": "conv_1901k4ftpn4tf0wtdr3h5fvs1sc7",
+        "transcript": "Agent: Hi there! Thanks for taking the time to chat today. I\u2019m here to learn about your experience and hear your honest thoughts. \n  To get us started...",
+        "sentiment": {
+          "sentiment_label": "positive",
+          "sentiment_score": 0.7,
+          "confidence": 0.8
+        },
+        "created_at": "",
+        "duration": 0
+      }
+    ]
+  },
+  "insights": {
+    "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+    "generated_at": "2024-01-15T18:30:00Z",
+    "insights": {
+      "summary": {
+        "total_conversations": 15,
+        "critical_issues_identified": 3,
+        "revenue_at_risk": "$127,000/month",
+        "avg_resolution_time": "4.2 hours"
+      },
+      "priority_insights": {
+        "P0": {
+          "title": "Pricing Page Failures Driving User Churn",
+          "description": "Critical issue affecting multiple users daily with significant business impact",
+          "priority": "P0",
+          "what_users_are_saying": {
+            "primary_quote": "I spent way too long trying to understand what the difference between Pro and Enterprise plans are. The pricing page is confusing and I'm considering competitors.",
+            "sentiment_score": -0.8,
+            "frequency": "Daily frustration, Power Users, Enterprise prospects",
+            "source": "Sarah Chen - TechFlow Analytics"
+          },
+          "what_the_data_shows": {
+            "pricing_page_conversion_rate": {
+              "current": "12%",
+              "target": "35%",
+              "status": "Critical"
+            },
+            "avg_time_on_pricing_page": {
+              "current": "8.4 minutes",
+              "target": "2.5 minutes",
+              "status": "Poor"
+            },
+            "pricing_page_abandonment_rate": {
+              "current": "77%",
+              "target": "25%",
+              "status": "Critical"
+            },
+            "users_affected_daily": 156,
+            "checkout_abandonment_from_pricing": "68%"
+          },
+          "business_impact": {
+            "revenue_at_risk": "$82,000/month",
+            "churn_probability": "73%",
+            "nps_impact": "-22 points",
+            "customer_acquisition_cost_increase": "+45%"
+          },
+          "recommended_action": {
+            "title": "Redesign pricing page with clear value propositions and simplified tiers",
+            "effort": "High",
+            "impact": "Critical",
+            "owner": "Product Team + UX Design",
+            "timeline": "2 weeks",
+            "success_metrics": [
+              "Conversion rate >30%",
+              "Time on page <3min",
+              "Abandonment <30%"
+            ]
+          }
+        },
+        "P1": {
+          "title": "Checkout Process Failures Blocking Revenue",
+          "description": "High-impact payment and form issues preventing purchase completion",
+          "priority": "P1",
+          "what_users_are_saying": {
+            "primary_quote": "I've been trying to complete my purchase for an hour. Your checkout keeps failing with payment errors, but my cards work everywhere else.",
+            "sentiment_score": -0.7,
+            "frequency": "Multiple daily occurrences, Enterprise customers",
+            "source": "Michael Rodriguez - DataCorp Solutions"
+          },
+          "what_the_data_shows": {
+            "checkout_success_rate": {
+              "current": "67%",
+              "target": "95%",
+              "status": "Poor"
+            },
+            "payment_failure_rate": {
+              "current": "23%",
+              "target": "<2%",
+              "status": "Critical"
+            },
+            "form_completion_rate": {
+              "current": "78%",
+              "target": "92%",
+              "status": "Needs Improvement"
+            },
+            "users_affected_daily": 89,
+            "avg_checkout_attempts": 2.8
+          },
+          "business_impact": {
+            "revenue_at_risk": "$34,000/month",
+            "conversion_loss": "33%",
+            "customer_support_tickets": "+180%",
+            "payment_processor_fees": "+$2,400/month"
+          },
+          "recommended_action": {
+            "title": "Fix payment processing errors and optimize checkout flow",
+            "effort": "Medium",
+            "impact": "High",
+            "owner": "Engineering Team + Payments",
+            "timeline": "1 week",
+            "success_metrics": [
+              "Success rate >90%",
+              "Payment failures <5%",
+              "Single-attempt completion >80%"
+            ]
+          }
+        },
+        "P2": {
+          "title": "Search Functionality Hampering User Experience",
+          "description": "Search performance and relevance issues affecting user productivity",
+          "priority": "P2",
+          "what_users_are_saying": {
+            "primary_quote": "Your search function is too literal and slow. I searched for 'analytics dashboard' but couldn't find the actual dashboard feature.",
+            "sentiment_score": -0.45,
+            "frequency": "Weekly complaints, Power users",
+            "source": "Jennifer Kim - Analytics Pro"
+          },
+          "what_the_data_shows": {
+            "search_success_rate": {
+              "current": "54%",
+              "target": "85%",
+              "status": "Needs Improvement"
+            },
+            "avg_search_response_time": {
+              "current": "4.2 seconds",
+              "target": "0.8 seconds",
+              "status": "Poor"
+            },
+            "zero_results_rate": {
+              "current": "28%",
+              "target": "<10%",
+              "status": "High"
+            },
+            "users_affected_daily": 67,
+            "search_abandonment_rate": "31%"
+          },
+          "business_impact": {
+            "productivity_loss": "15 minutes/user/day",
+            "feature_discovery_rate": "-40%",
+            "user_satisfaction": "-8 points",
+            "support_tickets": "+25%"
+          },
+          "recommended_action": {
+            "title": "Implement intelligent search with semantic matching and performance optimization",
+            "effort": "Medium",
+            "impact": "Medium",
+            "owner": "Search Team + Backend",
+            "timeline": "3 weeks",
+            "success_metrics": [
+              "Success rate >80%",
+              "Response time <1s",
+              "Zero results <15%"
+            ]
+          }
+        }
+      },
+      "business_impact": {
+        "total_revenue_at_risk": "$127,000/month",
+        "customer_churn_risk": "45%",
+        "support_cost_increase": "$18,500/month",
+        "nps_impact": "-15 points",
+        "conversion_rate_impact": "-28%",
+        "customer_lifetime_value_impact": "-$2,340/customer"
+      },
+      "recommended_actions": [
+        {
+          "priority": "P0",
+          "title": "Emergency pricing page redesign",
+          "description": "Immediate redesign of pricing page with clear value props",
+          "owner": "Product + UX Team",
+          "timeline": "2 weeks",
+          "effort": "High",
+          "impact": "Critical"
+        },
+        {
+          "priority": "P1",
+          "title": "Fix checkout payment processing",
+          "description": "Resolve payment gateway issues and form bugs",
+          "owner": "Engineering + Payments",
+          "timeline": "1 week",
+          "effort": "Medium",
+          "impact": "High"
+        },
+        {
+          "priority": "P2",
+          "title": "Upgrade search functionality",
+          "description": "Implement semantic search and performance improvements",
+          "owner": "Search Team",
+          "timeline": "3 weeks",
+          "effort": "Medium",
+          "impact": "Medium"
+        }
+      ]
+    }
+  },
+  "mock_conversations": {
+    "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+    "mock_conversations": [
+      {
+        "id": "conv_pricing_001",
+        "transcript": "User: I'm trying to understand your pricing but it's so confusing. What's the difference between Pro and Enterprise? Agent: Let me help clarify our pricing tiers... User: I've been on this page for 20 minutes and still don't get it. The features overlap and pricing jumps are huge. I'm just going to look at competitors. Agent: I understand your frustration...",
+        "sentiment_score": -0.8,
+        "category": "pricing_confusion",
+        "priority": "P0",
+        "created_at": "2024-01-15T14:30:00Z",
+        "duration": 420,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      },
+      {
+        "id": "conv_pricing_002",
+        "transcript": "User: Your pricing page crashed when I tried to calculate costs for my team. Agent: I'm sorry to hear that. Can you tell me more? User: I selected 50 users and it just froze. This is the third time today. How am I supposed to make a purchase decision? Agent: That's definitely not the experience we want...",
+        "sentiment_score": -0.9,
+        "category": "pricing_technical_issues",
+        "priority": "P0",
+        "created_at": "2024-01-15T16:45:00Z",
+        "duration": 380,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      },
+      {
+        "id": "conv_pricing_003",
+        "transcript": "User: I was ready to upgrade to Pro but your pricing calculator is broken. Agent: What seems to be the issue? User: It shows different prices every time I refresh. First $99, then $149, now $199 for the same plan. This is unprofessional. Agent: I sincerely apologize for this inconsistency...",
+        "sentiment_score": -0.7,
+        "category": "pricing_inconsistency",
+        "priority": "P0",
+        "created_at": "2024-01-15T11:20:00Z",
+        "duration": 290,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      },
+      {
+        "id": "conv_checkout_001",
+        "transcript": "User: I've been trying to complete my purchase for an hour. Your checkout keeps failing. Agent: I'm sorry for the trouble. What error are you seeing? User: It says 'payment processing error' but my card works everywhere else. I've tried three different cards. Agent: Let me look into this payment issue...",
+        "sentiment_score": -0.8,
+        "category": "checkout_payment_failure",
+        "priority": "P1",
+        "created_at": "2024-01-15T13:15:00Z",
+        "duration": 520,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      },
+      {
+        "id": "conv_checkout_002",
+        "transcript": "User: The checkout form is missing required fields and I can't proceed. Agent: Which fields are you having trouble with? User: The company field disappeared after I selected my country. Now I can't enter my business info and the form won't submit. Agent: That's definitely a bug we need to fix...",
+        "sentiment_score": -0.6,
+        "category": "checkout_form_issues",
+        "priority": "P1",
+        "created_at": "2024-01-15T15:30:00Z",
+        "duration": 340,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      },
+      {
+        "id": "conv_search_001",
+        "transcript": "User: Your search function doesn't work properly. I can't find basic features. Agent: What are you trying to search for? User: I searched for 'analytics dashboard' and got results for 'analytics' but not the actual dashboard feature. The search is too literal. Agent: I understand the search could be more intelligent...",
+        "sentiment_score": -0.4,
+        "category": "search_relevance",
+        "priority": "P2",
+        "created_at": "2024-01-15T10:45:00Z",
+        "duration": 280,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      },
+      {
+        "id": "conv_search_002",
+        "transcript": "User: The search is really slow and sometimes doesn't return any results. Agent: How long does it typically take? User: Sometimes 10-15 seconds, and for common terms like 'settings' it says no results found. But I know settings exist. Agent: That response time is definitely too slow...",
+        "sentiment_score": -0.5,
+        "category": "search_performance",
+        "priority": "P2",
+        "created_at": "2024-01-15T12:00:00Z",
+        "duration": 195,
+        "agent_id": "agent_8901k4fkatt1e858rn8ejamzqhfb",
+        "sentiment_label": "negative",
+        "confidence": 0.8
+      }
+    ],
+    "total_count": 7
+  }
+}
