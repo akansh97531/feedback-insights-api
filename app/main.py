@@ -11,16 +11,16 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from app.services.simple_analyzer import SimpleAnalyzer
+# from app.services.simple_analyzer import SimpleAnalyzer
 from app.services.elevenlabs import ElevenLabsClient
-from app.services.insights_generator import ProductInsightsGenerator
+# from app.services.insights_generator import ProductInsightsGenerator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="ElevenLabs Voice Agent Insights API",
-    description="Generate actionable business insights from ElevenLabs voice agent conversations using local LLM analysis with qwen2:1.5b for fast inference",
+    description="Simplified API for ElevenLabs voice agent conversations - insights generation disabled",
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -35,9 +35,9 @@ app.add_middleware(
 )
 
 # Initialize services
-analyzer = SimpleAnalyzer()
+# analyzer = SimpleAnalyzer()
 client = ElevenLabsClient()
-insights_generator = ProductInsightsGenerator()
+# insights_generator = ProductInsightsGenerator()
 
 @app.get("/")
 async def root():
@@ -46,16 +46,12 @@ async def root():
         "version": "2.0.0",
         "description": "Generate actionable business insights from voice agent conversations",
         "features": [
-            "LLM-powered conversation analysis (qwen2:1.5b)",
-            "P0/P1/P2 priority classification",
-            "Actionable recommendations with effort/impact/timeline",
             "Real ElevenLabs API integration",
-            "Fast 2-3 second inference"
+            "Conversation retrieval and categorization",
+            "P0/P1/P2 conversation classification"
         ],
         "endpoints": {
-            "insights": "/agent/{agent_id}/insights",
             "conversations": "/agent/{agent_id}/conversations", 
-            "analyze": "/analyze",
             "health": "/health",
             "docs": "/docs"
         }
@@ -63,15 +59,15 @@ async def root():
 
 @app.get("/health")
 async def health():
-    healthy = await analyzer.health_check()
-    return {"status": "healthy" if healthy else "degraded"}
+    # healthy = await analyzer.health_check()
+    return {"status": "healthy"}
 
-@app.post("/analyze")
-async def analyze(data: Dict[str, str]):
-    text = data.get("text", "")
-    if not text:
-        raise HTTPException(400, "Text required")
-    return await analyzer.analyze_sentiment(text)
+# @app.post("/analyze")
+# async def analyze(data: Dict[str, str]):
+#     text = data.get("text", "")
+#     if not text:
+#         raise HTTPException(400, "Text required")
+#     return await analyzer.analyze_sentiment(text)
 
 
 def _extract_themes(text: str, sentiment_type: str) -> list:
@@ -222,82 +218,82 @@ async def get_agent_conversations(agent_id: str, limit: int = 50):
         }
     }
 
-@app.get("/agent/{agent_id}/insights")
-async def get_product_insights(agent_id: str):
-    """
-    Get comprehensive business insights with actionable recommendations.
-    
-    Analyzes the latest ElevenLabs conversation using qwen2:1.5b LLM to generate:
-    - P0/P1/P2 priority classification based on business impact
-    - Specific recommended actions with effort, impact, and timeline
-    - Business metrics and revenue impact analysis
-    - Customer sentiment and key quotes
-    
-    Returns comprehensive insights as JSON response without file persistence
-    """
-    try:
-        # Get latest conversation from ElevenLabs
-        latest_conv = await client.get_latest_conversation(agent_id)
-        
-        # Load existing conversations from transcript file
-        import json
-        existing_conversations = []
-        try:
-            with open("conversation_transcripts.json", "r", encoding="utf-8") as f:
-                transcript_data = json.load(f)
-                existing_conversations = transcript_data.get("conversations", [])
-        except FileNotFoundError:
-            pass
-        
-        # Combine latest conversation with existing ones
-        convs = []
-        if latest_conv:
-            convs.append(latest_conv)
-        
-        # Convert existing conversations to the expected format
-        for conv in existing_conversations:
-            convs.append({
-                "id": conv.get("id", ""),
-                "agent_id": agent_id,
-                "transcript": conv.get("transcript", ""),
-                "created_at": conv.get("created_at", ""),
-                "duration": conv.get("duration", 0)
-            })
-        
-        # Generate comprehensive insights from combined conversations
-        insights = await insights_generator.generate_comprehensive_insights(convs)
-        
-        return {
-            "agent_id": agent_id,
-            "generated_at": "2024-01-15T18:30:00Z",
-            "insights": insights
-        }
-        
-    except Exception as e:
-        logger.error(f"Error generating insights for agent {agent_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
+# @app.get("/agent/{agent_id}/insights")
+# async def get_product_insights(agent_id: str):
+#     """
+#     Get comprehensive business insights with actionable recommendations.
+#     
+#     Analyzes the latest ElevenLabs conversation using qwen2:1.5b LLM to generate:
+#     - P0/P1/P2 priority classification based on business impact
+#     - Specific recommended actions with effort, impact, and timeline
+#     - Business metrics and revenue impact analysis
+#     - Customer sentiment and key quotes
+#     
+#     Returns comprehensive insights as JSON response without file persistence
+#     """
+#     try:
+#         # Get latest conversation from ElevenLabs
+#         latest_conv = await client.get_latest_conversation(agent_id)
+#         
+#         # Load existing conversations from transcript file
+#         import json
+#         existing_conversations = []
+#         try:
+#             with open("conversation_transcripts.json", "r", encoding="utf-8") as f:
+#                 transcript_data = json.load(f)
+#                 existing_conversations = transcript_data.get("conversations", [])
+#         except FileNotFoundError:
+#             pass
+#         
+#         # Combine latest conversation with existing ones
+#         convs = []
+#         if latest_conv:
+#             convs.append(latest_conv)
+#         
+#         # Convert existing conversations to the expected format
+#         for conv in existing_conversations:
+#             convs.append({
+#                 "id": conv.get("id", ""),
+#                 "agent_id": agent_id,
+#                 "transcript": conv.get("transcript", ""),
+#                 "created_at": conv.get("created_at", ""),
+#                 "duration": conv.get("duration", 0)
+#             })
+#         
+#         # Generate comprehensive insights from combined conversations
+#         insights = await insights_generator.generate_comprehensive_insights(convs)
+#         
+#         return {
+#             "agent_id": agent_id,
+#             "generated_at": "2024-01-15T18:30:00Z",
+#             "insights": insights
+#         }
+#         
+#     except Exception as e:
+#         logger.error(f"Error generating insights for agent {agent_id}: {e}")
+#         raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
 
-@app.get("/agent/{agent_id}/mock-conversations")
-async def get_mock_conversations(agent_id: str):
-    """Get mock conversations for testing insights generation."""
-    mock_convs = insights_generator.get_mock_conversations()
-    
-    # Add sentiment analysis to mock conversations
-    processed_mock = []
-    for conv in mock_convs:
-        sentiment = await analyzer.analyze_sentiment(conv["transcript"])
-        processed_mock.append({
-            **conv,
-            "agent_id": agent_id,
-            "sentiment_label": sentiment["sentiment_label"],
-            "confidence": sentiment["confidence"]
-        })
-    
-    return {
-        "agent_id": agent_id,
-        "mock_conversations": processed_mock,
-        "total_count": len(processed_mock)
-    }
+# @app.get("/agent/{agent_id}/mock-conversations")
+# async def get_mock_conversations(agent_id: str):
+#     """Get mock conversations for testing insights generation."""
+#     mock_convs = insights_generator.get_mock_conversations()
+#     
+#     # Add sentiment analysis to mock conversations
+#     processed_mock = []
+#     for conv in mock_convs:
+#         sentiment = await analyzer.analyze_sentiment(conv["transcript"])
+#         processed_mock.append({
+#             **conv,
+#             "agent_id": agent_id,
+#             "sentiment_label": sentiment["sentiment_label"],
+#             "confidence": sentiment["confidence"]
+#         })
+#     
+#     return {
+#         "agent_id": agent_id,
+#         "mock_conversations": processed_mock,
+#         "total_count": len(processed_mock)
+#     }
 
 if __name__ == "__main__":
     import uvicorn
