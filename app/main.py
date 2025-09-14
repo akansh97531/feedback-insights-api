@@ -1,31 +1,37 @@
 """
-Ultra-simple FastAPI app for ElevenLabs sentiment analysis.
+Professional Network Matching Engine API
+Builds intelligent networking recommendations using Cohere and graph analysis.
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any, List
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field
 import logging
 import os
-from dotenv import load_dotenv
+from datetime import datetime
 
-# Load environment variables from .env file
-load_dotenv()
+from app.services.network_matching_engine import NetworkMatchingEngine
+from app.services.cohere_service import CohereService
 
-# from app.services.simple_analyzer import SimpleAnalyzer
-from app.services.elevenlabs import ElevenLabsClient
-# from app.services.insights_generator import ProductInsightsGenerator
-
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize services
+cohere_service = CohereService()
+matching_engine = NetworkMatchingEngine(cohere_service)
+
+# Global flag to track initialization
+network_initialized = False
+
+# Create FastAPI app
 app = FastAPI(
-    title="ElevenLabs Voice Agent Insights API",
-    description="Simplified API for ElevenLabs voice agent conversations - insights generation disabled",
-    version="2.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    title="Professional Network Matching Engine",
+    description="AI-powered professional networking recommendations using Cohere and graph analysis",
+    version="1.0.0"
 )
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,266 +40,202 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize services
-# analyzer = SimpleAnalyzer()
-client = ElevenLabsClient()
-# insights_generator = ProductInsightsGenerator()
+# Pydantic models
+class NetworkingQuery(BaseModel):
+    requester_id: str = Field(..., description="ID of the person making the networking request")
+    query: str = Field(..., description="Natural language networking query")
+    max_results: int = Field(10, description="Maximum number of connection recommendations")
+    include_explanations: bool = Field(True, description="Include match explanations")
+
+class IntroductionRequest(BaseModel):
+    requester_id: str = Field(..., description="ID of person requesting introduction")
+    target_id: str = Field(..., description="ID of person to be introduced to")
+    context: Optional[str] = Field(None, description="Context or reason for introduction")
+
+class InitializeRequest(BaseModel):
+    num_profiles: int = Field(50, description="Number of synthetic profiles to generate")
 
 @app.get("/")
 async def root():
     return {
-        "message": "ElevenLabs Voice Agent Insights API",
-        "version": "2.0.0",
-        "description": "Generate actionable business insights from voice agent conversations",
+        "message": "Professional Network Matching Engine",
+        "version": "1.0.0",
+        "description": "AI-powered professional networking recommendations",
         "features": [
-            "Real ElevenLabs API integration",
-            "Conversation retrieval and categorization",
-            "P0/P1/P2 conversation classification"
+            "Natural Language Query Processing",
+            "Multi-Metric Similarity Scoring",
+            "Cohere Embeddings & Re-ranking",
+            "Introduction Email Generation",
+            "Graph-based Connection Analysis"
         ],
         "endpoints": {
-            "conversations": "/agent/{agent_id}/conversations", 
+            "initialize": "/initialize",
+            "find_connections": "/find-connections",
+            "generate_introduction": "/generate-introduction",
+            "network_stats": "/network-stats",
             "health": "/health",
             "docs": "/docs"
-        }
+        },
+        "network_initialized": network_initialized
     }
 
 @app.get("/health")
-async def health():
-    # healthy = await analyzer.health_check()
-    return {"status": "healthy"}
-
-# @app.post("/analyze")
-# async def analyze(data: Dict[str, str]):
-#     text = data.get("text", "")
-#     if not text:
-#         raise HTTPException(400, "Text required")
-#     return await analyzer.analyze_sentiment(text)
-
-
-def _extract_themes(text: str, sentiment_type: str) -> list:
-    """Extract key themes from conversation text."""
-    if not text or not isinstance(text, str):
-        return []
-    text_lower = text.lower()
-    
-    if sentiment_type == "positive":
-        themes = []
-        if any(word in text_lower for word in ["helpful", "support", "team", "service"]):
-            themes.append("customer_support")
-        if any(word in text_lower for word in ["quick", "fast", "resolved", "efficient"]):
-            themes.append("response_time")
-        if any(word in text_lower for word in ["quality", "excellent", "amazing", "fantastic"]):
-            themes.append("product_quality")
-        if any(word in text_lower for word in ["professional", "knowledgeable", "expert"]):
-            themes.append("staff_expertise")
-        if any(word in text_lower for word in ["easy", "simple", "straightforward"]):
-            themes.append("ease_of_use")
-        return themes
-    
-    else:  # negative
-        themes = []
-        if any(word in text_lower for word in ["waiting", "slow", "delay", "hours"]):
-            themes.append("response_time")
-        if any(word in text_lower for word in ["help", "support", "nobody", "unhelpful"]):
-            themes.append("customer_support")
-        if any(word in text_lower for word in ["broken", "doesn't work", "quality", "terrible"]):
-            themes.append("product_quality")
-        if any(word in text_lower for word in ["confusing", "difficult", "complicated"]):
-            themes.append("ease_of_use")
-        if any(word in text_lower for word in ["expensive", "money", "waste", "cost"]):
-            themes.append("pricing")
-        return themes
-
-def _generate_insights(themes: list, sentiment_type: str) -> list:
-    """Generate concise insights from theme analysis."""
-    if not themes:
-        return []
-    
-    # Count theme frequency
-    theme_counts = {}
-    for theme in themes:
-        theme_counts[theme] = theme_counts.get(theme, 0) + 1
-    
-    # Sort by frequency
-    sorted_themes = sorted(theme_counts.items(), key=lambda x: x[1], reverse=True)
-    
-    insights = []
-    theme_messages = {
-        "customer_support": {
-            "positive": "Customers praise the helpful and responsive support team",
-            "negative": "Customer support needs improvement - customers report unhelpful interactions"
-        },
-        "response_time": {
-            "positive": "Fast response times and quick issue resolution are highly valued",
-            "negative": "Slow response times causing customer frustration - need faster support"
-        },
-        "product_quality": {
-            "positive": "Product quality consistently exceeds customer expectations",
-            "negative": "Product quality issues reported - focus on reliability and functionality"
-        },
-        "staff_expertise": {
-            "positive": "Customers appreciate knowledgeable and professional staff",
-            "negative": "Staff training needed to improve expertise and professionalism"
-        },
-        "ease_of_use": {
-            "positive": "Simple and intuitive user experience drives satisfaction",
-            "negative": "Product complexity causing confusion - simplify user experience"
-        },
-        "pricing": {
-            "positive": "Customers find good value for money",
-            "negative": "Pricing concerns - customers question value proposition"
-        }
-    }
-    
-    for theme, count in sorted_themes[:3]:  # Top 3 themes
-        if theme in theme_messages:
-            insights.append(theme_messages[theme][sentiment_type])
-    
-    return insights
-
-@app.get("/agent/{agent_id}/conversations")
-async def get_agent_conversations(agent_id: str, limit: int = 50):
-    """Get conversations categorized by P0/P1/P2 business impact."""
-    convs = await client.get_agent_conversations(agent_id, limit)
-    
-    # Categorize conversations by business impact
-    p0_conversations = []
-    p1_conversations = []
-    p2_conversations = []
-    
-    for conv in convs:
-        # Analyze for business impact categories
-        transcript_lower = conv["transcript"].lower()
-        
-        # P0 - Pricing issues (critical revenue impact)
-        if any(word in transcript_lower for word in ["pricing", "price", "cost", "expensive", "plan", "tier"]):
-            p0_conversations.append({
-                "id": conv["id"],
-                "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
-                "category": "pricing_issues",
-                "priority": "P0",
-                "business_impact": "Revenue at risk",
-                "created_at": conv["created_at"],
-                "duration": conv.get("duration", 0)
-            })
-        # P1 - Checkout/payment issues (high revenue impact)
-        elif any(word in transcript_lower for word in ["checkout", "payment", "purchase", "buy", "card", "billing"]):
-            p1_conversations.append({
-                "id": conv["id"],
-                "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
-                "category": "checkout_issues",
-                "priority": "P1", 
-                "business_impact": "Conversion loss",
-                "created_at": conv["created_at"],
-                "duration": conv.get("duration", 0)
-            })
-        # P2 - Search/usability issues (medium impact)
-        else:
-            p2_conversations.append({
-                "id": conv["id"],
-                "transcript": conv["transcript"][:150] + "..." if len(conv["transcript"]) > 150 else conv["transcript"],
-                "category": "usability_issues",
-                "priority": "P2",
-                "business_impact": "User experience",
-                "created_at": conv["created_at"],
-                "duration": conv.get("duration", 0)
-            })
-    
+async def health_check():
+    """Health check endpoint for Railway deployment."""
     return {
-        "agent_id": agent_id,
-        "total_conversations": len(convs),
-        "priority_breakdown": {
-            "P0_critical": {
-                "count": len(p0_conversations),
-                "conversations": p0_conversations
-            },
-            "P1_high": {
-                "count": len(p1_conversations),
-                "conversations": p1_conversations
-            },
-            "P2_medium": {
-                "count": len(p2_conversations),
-                "conversations": p2_conversations
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "Professional Network Matching Engine",
+        "version": "1.0.0"
+    }
+
+@app.post("/initialize")
+async def initialize_network(request: InitializeRequest):
+    """Initialize the professional network with synthetic data."""
+    global network_initialized
+    
+    try:
+        logger.info(f"Initializing network with {request.num_profiles} profiles...")
+        
+        result = await matching_engine.initialize_with_synthetic_data(request.num_profiles)
+        network_initialized = True
+        
+        return {
+            "message": "Professional network initialized successfully",
+            "initialization_stats": result,
+            "ready_for_queries": True
+        }
+        
+    except Exception as e:
+        import traceback
+        logger.error(f"Error initializing network: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to initialize network: {str(e)}")
+
+@app.post("/find-connections")
+async def find_connections(request: NetworkingQuery):
+    """Find professional connections based on natural language query."""
+    if not network_initialized:
+        raise HTTPException(
+            status_code=400, 
+            detail="Network not initialized. Please call /initialize first."
+        )
+    
+    try:
+        logger.info(f"Processing networking query: '{request.query}' for user {request.requester_id}")
+        
+        results = await matching_engine.find_connections(
+            requester_profile_id=request.requester_id,
+            query=request.query,
+            max_results=request.max_results,
+            include_explanations=request.include_explanations
+        )
+        
+        return results
+        
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error finding connections: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to find connections: {str(e)}")
+
+@app.post("/generate-introduction")
+async def generate_introduction(request: IntroductionRequest):
+    """Generate a personalized introduction email."""
+    if not network_initialized:
+        raise HTTPException(
+            status_code=400, 
+            detail="Network not initialized. Please call /initialize first."
+        )
+    
+    try:
+        logger.info(f"Generating introduction from {request.requester_id} to {request.target_id}")
+        
+        result = await matching_engine.generate_introduction_email(
+            requester_profile_id=request.requester_id,
+            target_profile_id=request.target_id,
+            context=request.context
+        )
+        
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating introduction: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate introduction: {str(e)}")
+
+@app.get("/network-stats")
+async def get_network_stats():
+    """Get statistics about the professional network."""
+    if not network_initialized:
+        raise HTTPException(
+            status_code=400, 
+            detail="Network not initialized. Please call /initialize first."
+        )
+    
+    try:
+        stats = matching_engine.get_network_stats()
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting network stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/profiles")
+async def list_profiles(
+    limit: int = 20,
+    offset: int = 0,
+    company: Optional[str] = None,
+    job_title: Optional[str] = None
+):
+    """List professional profiles with optional filtering."""
+    if not network_initialized:
+        raise HTTPException(
+            status_code=400, 
+            detail="Network not initialized. Please call /initialize first."
+        )
+    
+    try:
+        profiles = list(matching_engine.profiles_cache.values())
+        
+        # Apply filters
+        if company:
+            profiles = [p for p in profiles if company.lower() in p.get("company", "").lower()]
+        if job_title:
+            profiles = [p for p in profiles if job_title.lower() in p.get("job_title", "").lower()]
+        
+        # Paginate
+        total = len(profiles)
+        profiles = profiles[offset:offset + limit]
+        
+        # Format for response
+        formatted_profiles = []
+        for profile in profiles:
+            formatted_profiles.append({
+                "id": profile["id"],
+                "name": profile["name"],
+                "job_title": profile["job_title"],
+                "company": profile["company"],
+                "industry": profile.get("industry"),
+                "skills": profile.get("skills", [])[:5],  # Top 5 skills
+                "bio": profile.get("bio", "")[:150] + "..." if len(profile.get("bio", "")) > 150 else profile.get("bio", "")
+            })
+        
+        return {
+            "profiles": formatted_profiles,
+            "pagination": {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "has_more": offset + limit < total
             }
         }
-    }
+        
+    except Exception as e:
+        logger.error(f"Error listing profiles: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-# @app.get("/agent/{agent_id}/insights")
-# async def get_product_insights(agent_id: str):
-#     """
-#     Get comprehensive business insights with actionable recommendations.
-#     
-#     Analyzes the latest ElevenLabs conversation using qwen2:1.5b LLM to generate:
-#     - P0/P1/P2 priority classification based on business impact
-#     - Specific recommended actions with effort, impact, and timeline
-#     - Business metrics and revenue impact analysis
-#     - Customer sentiment and key quotes
-#     
-#     Returns comprehensive insights as JSON response without file persistence
-#     """
-#     try:
-#         # Get latest conversation from ElevenLabs
-#         latest_conv = await client.get_latest_conversation(agent_id)
-#         
-#         # Load existing conversations from transcript file
-#         import json
-#         existing_conversations = []
-#         try:
-#             with open("conversation_transcripts.json", "r", encoding="utf-8") as f:
-#                 transcript_data = json.load(f)
-#                 existing_conversations = transcript_data.get("conversations", [])
-#         except FileNotFoundError:
-#             pass
-#         
-#         # Combine latest conversation with existing ones
-#         convs = []
-#         if latest_conv:
-#             convs.append(latest_conv)
-#         
-#         # Convert existing conversations to the expected format
-#         for conv in existing_conversations:
-#             convs.append({
-#                 "id": conv.get("id", ""),
-#                 "agent_id": agent_id,
-#                 "transcript": conv.get("transcript", ""),
-#                 "created_at": conv.get("created_at", ""),
-#                 "duration": conv.get("duration", 0)
-#             })
-#         
-#         # Generate comprehensive insights from combined conversations
-#         insights = await insights_generator.generate_comprehensive_insights(convs)
-#         
-#         return {
-#             "agent_id": agent_id,
-#             "generated_at": "2024-01-15T18:30:00Z",
-#             "insights": insights
-#         }
-#         
-#     except Exception as e:
-#         logger.error(f"Error generating insights for agent {agent_id}: {e}")
-#         raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
-
-# @app.get("/agent/{agent_id}/mock-conversations")
-# async def get_mock_conversations(agent_id: str):
-#     """Get mock conversations for testing insights generation."""
-#     mock_convs = insights_generator.get_mock_conversations()
-#     
-#     # Add sentiment analysis to mock conversations
-#     processed_mock = []
-#     for conv in mock_convs:
-#         sentiment = await analyzer.analyze_sentiment(conv["transcript"])
-#         processed_mock.append({
-#             **conv,
-#             "agent_id": agent_id,
-#             "sentiment_label": sentiment["sentiment_label"],
-#             "confidence": sentiment["confidence"]
-#         })
-#     
-#     return {
-#         "agent_id": agent_id,
-#         "mock_conversations": processed_mock,
-#         "total_count": len(processed_mock)
-#     }
 
 if __name__ == "__main__":
     import uvicorn
